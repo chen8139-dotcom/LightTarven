@@ -42,7 +42,7 @@ export default function TopNav() {
         </Link>
       ) : null}
       <Link href="/dashboard" className={navClass(pathname.startsWith("/dashboard"))}>
-        角色设置
+        角色列表
       </Link>
       <Link href="/settings" className={navClass(pathname.startsWith("/settings"))}>
         模型设置
