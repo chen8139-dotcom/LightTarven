@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { processCoverImage } from "@/lib/image";
 import { CanonicalCharacterCard } from "@/lib/types";
 import { exportCharactersJSON, getCharacters, removeCharacter, upsertCharacter } from "@/lib/storage";
 
 const emptyForm: Omit<CanonicalCharacterCard, "id"> = {
   name: "",
   persona: "",
+  coverImageDataUrl: "",
   description: "",
   scenario: "",
   style: "",
@@ -38,6 +40,7 @@ export default function DashboardPage() {
     setForm({
       name: editing.name,
       persona: editing.persona,
+      coverImageDataUrl: editing.coverImageDataUrl ?? "",
       description: editing.description ?? "",
       scenario: editing.scenario ?? "",
       style: editing.style ?? "",
@@ -52,6 +55,7 @@ export default function DashboardPage() {
       id: editingId ?? crypto.randomUUID(),
       name: form.name.trim(),
       persona: form.persona.trim(),
+      coverImageDataUrl: form.coverImageDataUrl?.trim() || undefined,
       description: form.description?.trim(),
       scenario: form.scenario?.trim(),
       style: form.style?.trim(),
@@ -84,6 +88,19 @@ export default function DashboardPage() {
     URL.revokeObjectURL(href);
   };
 
+  const onUploadCover = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await processCoverImage(file);
+      setForm((prev) => ({ ...prev, coverImageDataUrl: dataUrl }));
+    } catch {
+      alert("图片处理失败，请换一张图片重试。");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   return (
     <main className="grid gap-4 md:grid-cols-2">
       <section className="rounded border border-zinc-800 p-4">
@@ -98,6 +115,12 @@ export default function DashboardPage() {
               key={character.id}
               className="rounded border border-zinc-800 p-3 text-sm"
             >
+              {character.coverImageDataUrl ? (
+                <div
+                  className="mb-2 h-16 rounded bg-cover bg-center"
+                  style={{ backgroundImage: `url(${character.coverImageDataUrl})` }}
+                />
+              ) : null}
               <p className="font-semibold">{character.name}</p>
               <p className="line-clamp-2 text-zinc-400">{character.persona}</p>
               <div className="mt-2 flex gap-2">
@@ -129,6 +152,26 @@ export default function DashboardPage() {
             rows={5}
             className="w-full"
           />
+          <div className="space-y-2 rounded border border-zinc-800 p-3">
+            <p className="text-sm text-zinc-300">角色封面（聊天背景）</p>
+            <input type="file" accept="image/*" onChange={onUploadCover} className="w-full" />
+            {form.coverImageDataUrl ? (
+              <div
+                className="h-24 rounded bg-cover bg-center"
+                style={{ backgroundImage: `url(${form.coverImageDataUrl})` }}
+              />
+            ) : (
+              <p className="text-xs text-zinc-500">未上传封面图</p>
+            )}
+            {form.coverImageDataUrl ? (
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, coverImageDataUrl: "" }))}
+              >
+                清除封面
+              </button>
+            ) : null}
+          </div>
           <textarea
             value={form.description}
             onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}

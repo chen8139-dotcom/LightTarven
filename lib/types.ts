@@ -3,6 +3,7 @@ export type CanonicalCharacterCard = {
   name: string;
   description?: string;
   persona: string;
+  coverImageDataUrl?: string;
   scenario?: string;
   style?: string;
   rules?: string;
