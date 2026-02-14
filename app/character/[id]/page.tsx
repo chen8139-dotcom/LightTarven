@@ -23,13 +23,27 @@ export default function CharacterPage() {
   const [error, setError] = useState("");
   const [debugConfig, setDebugConfig] = useState({ maxHistory: 12, includeExamples: true });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [currentModel, setCurrentModel] = useState("openai/gpt-4o-mini");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const current = getCharacters().find((item) => item.id === characterId) ?? null;
     setCharacter(current);
     setHistory(getHistory(characterId));
+    setCurrentModel(getSettings().model || "openai/gpt-4o-mini");
   }, [characterId]);
+
+  useEffect(() => {
+    const refreshModel = () => {
+      setCurrentModel(getSettings().model || "openai/gpt-4o-mini");
+    };
+    window.addEventListener("focus", refreshModel);
+    window.addEventListener("storage", refreshModel);
+    return () => {
+      window.removeEventListener("focus", refreshModel);
+      window.removeEventListener("storage", refreshModel);
+    };
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -141,8 +155,11 @@ export default function CharacterPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
         <div className="relative z-10 flex h-full min-h-0 flex-col p-4 md:p-6">
           <header className="mb-4 rounded-2xl border border-white/20 bg-white/10 p-4 text-white backdrop-blur-md">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold">{character.name}</h2>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold">{character.name}</h2>
+                <p className="mt-1 text-xs text-zinc-200/85">当前模型：{currentModel}</p>
+              </div>
               <button
                 onClick={() => setSettingsOpen(true)}
                 className="border-white/30 bg-white/15 px-3 py-1.5 text-sm text-white"
