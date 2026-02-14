@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const protectedPages = ["/dashboard", "/settings", "/character"];
-const apiRoutes = ["/api/chat", "/api/test-key"];
+const apiRoutes = ["/api/chat", "/api/test-key", "/api/models"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -26,5 +26,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/settings", "/character/:path*", "/api/chat", "/api/test-key"]
+  matcher: ["/dashboard/:path*", "/settings", "/character/:path*", "/api/chat", "/api/test-key", "/api/models"]
 };
