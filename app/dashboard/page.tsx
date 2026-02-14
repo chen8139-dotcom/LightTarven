@@ -38,18 +38,30 @@ export default function DashboardPage() {
           </Link>
           <button onClick={onExport}>导出 JSON</button>
         </div>
-        <ul className="space-y-2">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {characters.map((character) => (
-            <li key={character.id} className="rounded border border-zinc-800 p-3 text-sm">
-              {character.coverImageDataUrl ? (
-                <div
-                  className="mb-2 h-16 rounded bg-cover bg-center"
-                  style={{ backgroundImage: `url(${character.coverImageDataUrl})` }}
-                />
-              ) : null}
-              <p className="font-semibold">{character.name}</p>
-              <p className="line-clamp-2 text-zinc-400">{character.persona}</p>
-              <div className="mt-2 flex gap-2">
+            <li
+              key={character.id}
+              className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 text-sm"
+            >
+              <div
+                className="relative h-52 bg-zinc-800 bg-cover bg-center"
+                style={
+                  character.coverImageDataUrl
+                    ? { backgroundImage: `url(${character.coverImageDataUrl})` }
+                    : undefined
+                }
+              >
+                {!character.coverImageDataUrl ? (
+                  <div className="flex h-full items-center justify-center text-xs text-zinc-400">
+                    未上传封面
+                  </div>
+                ) : null}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+              </div>
+              <div className="space-y-3 p-3">
+                <p className="truncate text-base font-semibold">{character.name}</p>
+                <div className="flex gap-2">
                 <Link href={`/character/${character.id}`}>
                   <button>进入聊天</button>
                 </Link>
@@ -57,6 +69,7 @@ export default function DashboardPage() {
                   <button>编辑</button>
                 </Link>
                 <button onClick={() => onDelete(character.id)}>删除</button>
+                </div>
               </div>
             </li>
           ))}
