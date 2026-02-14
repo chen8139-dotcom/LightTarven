@@ -94,23 +94,22 @@ export default function CharacterPage() {
       const { done, value } = await reader.read();
       if (done) break;
       assistantText += decoder.decode(value, { stream: true });
-      setHistory([
-        ...nextHistory,
-        {
-          role: "assistant",
-          content: assistantText,
-          timestamp: Date.now()
-        }
-      ]);
-    }
-
-    const finalHistory = [
-      ...nextHistory,
-      {
+      const assistantMessage: ChatMessage = {
         role: "assistant",
         content: assistantText,
         timestamp: Date.now()
-      }
+      };
+      setHistory([...nextHistory, assistantMessage]);
+    }
+
+    const finalAssistantMessage: ChatMessage = {
+      role: "assistant",
+      content: assistantText,
+      timestamp: Date.now()
+    };
+    const finalHistory: ChatMessage[] = [
+      ...nextHistory,
+      finalAssistantMessage
     ];
     saveHistory(characterId, finalHistory);
     setHistory(finalHistory);
