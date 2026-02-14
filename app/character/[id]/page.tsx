@@ -6,10 +6,12 @@ import { buildPromptStack } from "@/lib/promptStack";
 import {
   clearHistory,
   getCharacters,
+  getCurrentChatId,
   getHistory,
   getPasscode,
   getSettings,
-  saveHistory
+  saveHistory,
+  setCurrentChatId
 } from "@/lib/storage";
 import { CanonicalCharacterCard, ChatMessage } from "@/lib/types";
 
@@ -31,6 +33,9 @@ export default function CharacterPage() {
     setCharacter(current);
     setHistory(getHistory(characterId));
     setCurrentModel(getSettings().model || "openai/gpt-4o-mini");
+    if (characterId && getCurrentChatId() !== characterId) {
+      setCurrentChatId(characterId);
+    }
   }, [characterId]);
 
   useEffect(() => {

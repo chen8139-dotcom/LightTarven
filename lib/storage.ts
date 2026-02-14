@@ -4,7 +4,8 @@ const KEYS = {
   accessGranted: "lt_access_granted",
   passcode: "lt_passcode",
   characters: "lt_characters_v1",
-  settings: "lt_settings_v1"
+  settings: "lt_settings_v1",
+  currentChatId: "lt_current_chat_id"
 };
 
 export function isBrowser(): boolean {
@@ -108,4 +109,14 @@ export function saveHistory(characterId: string, history: ChatMessage[]): void {
 export function clearHistory(characterId: string): void {
   if (!isBrowser()) return;
   localStorage.removeItem(getHistoryKey(characterId));
+}
+
+export function setCurrentChatId(characterId: string): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(KEYS.currentChatId, characterId);
+}
+
+export function getCurrentChatId(): string {
+  if (!isBrowser()) return "";
+  return localStorage.getItem(KEYS.currentChatId) ?? "";
 }
