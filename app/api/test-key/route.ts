@@ -1,18 +1,25 @@
-import { OPENROUTER_BASE_URL, buildOpenRouterHeaders } from "@/lib/openrouter";
+import {
+  OPENROUTER_BASE_URL,
+  buildOpenRouterHeaders,
+  getServerOpenRouterApiKey
+} from "@/lib/openrouter";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { llmApiKey, model } = (await req.json()) as {
-    llmApiKey?: string;
+  const { model } = (await req.json()) as {
     model?: string;
   };
-  if (!llmApiKey || !model) {
-    return NextResponse.json({ error: "Missing key or model" }, { status: 400 });
+  if (!model) {
+    return NextResponse.json({ error: "Missing model" }, { status: 400 });
+  }
+  const serverApiKey = getServerOpenRouterApiKey();
+  if (!serverApiKey) {
+    return NextResponse.json({ error: "Server API key missing" }, { status: 500 });
   }
 
   const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
     method: "POST",
-    headers: buildOpenRouterHeaders(llmApiKey),
+    headers: buildOpenRouterHeaders(serverApiKey),
     body: JSON.stringify({
       model,
       messages: [{ role: "user", content: "Reply with OK." }],

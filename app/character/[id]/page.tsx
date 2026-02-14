@@ -70,11 +70,6 @@ export default function CharacterPage() {
     setLoading(true);
     setError("");
     const settings = getSettings();
-    if (!settings.llmApiKey) {
-      setError("请先在 Settings 配置 OpenRouter API Key。");
-      setLoading(false);
-      return;
-    }
 
     const userMessage: ChatMessage = {
       role: "user",
@@ -97,7 +92,6 @@ export default function CharacterPage() {
           history,
           userInput: userMessage.content,
           config: debugConfig,
-          llmApiKey: settings.llmApiKey,
           model: settings.model
         })
       });

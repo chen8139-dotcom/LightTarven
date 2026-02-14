@@ -1,9 +1,9 @@
-import { OPENROUTER_BASE_URL, buildOpenRouterHeaders } from "@/lib/openrouter";
-import { NextRequest, NextResponse } from "next/server";
-
-type ModelsPayload = {
-  llmApiKey?: string;
-};
+import {
+  OPENROUTER_BASE_URL,
+  buildOpenRouterHeaders,
+  getServerOpenRouterApiKey
+} from "@/lib/openrouter";
+import { NextResponse } from "next/server";
 
 type OpenRouterModel = {
   id?: string;
@@ -13,16 +13,16 @@ type OpenRouterModelsResponse = {
   data?: OpenRouterModel[];
 };
 
-export async function POST(req: NextRequest) {
-  const { llmApiKey } = (await req.json()) as ModelsPayload;
-  if (!llmApiKey) {
-    return NextResponse.json({ error: "Missing API key" }, { status: 400 });
+export async function POST() {
+  const serverApiKey = getServerOpenRouterApiKey();
+  if (!serverApiKey) {
+    return NextResponse.json({ error: "Server API key missing" }, { status: 500 });
   }
 
   try {
     const response = await fetch(`${OPENROUTER_BASE_URL}/models`, {
       method: "GET",
-      headers: buildOpenRouterHeaders(llmApiKey)
+      headers: buildOpenRouterHeaders(serverApiKey)
     });
 
     if (!response.ok) {

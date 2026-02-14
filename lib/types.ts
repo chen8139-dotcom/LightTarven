@@ -48,6 +48,5 @@ export type PromptStackOutput = {
 };
 
 export type UserSettings = {
-  llmApiKey: string;
   model: string;
 };

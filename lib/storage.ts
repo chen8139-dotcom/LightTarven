@@ -55,19 +55,14 @@ export function getPasscode(): string {
 }
 
 export function getSettings(): UserSettings {
-  return readJSON<UserSettings>(KEYS.settings, {
-    llmApiKey: "",
-    model: "openai/gpt-4o-mini"
-  });
+  const raw = readJSON<{ llmApiKey?: string; model?: string }>(KEYS.settings, {});
+  return {
+    model: raw.model?.trim() || "openai/gpt-4o-mini"
+  };
 }
 
 export function setSettings(value: UserSettings): void {
   writeJSON(KEYS.settings, value);
-}
-
-export function clearApiKey(): void {
-  const current = getSettings();
-  setSettings({ ...current, llmApiKey: "" });
 }
 
 export function getCharacters(): CanonicalCharacterCard[] {

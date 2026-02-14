@@ -1,4 +1,8 @@
-import { OPENROUTER_BASE_URL, buildOpenRouterHeaders } from "@/lib/openrouter";
+import {
+  OPENROUTER_BASE_URL,
+  buildOpenRouterHeaders,
+  getServerOpenRouterApiKey
+} from "@/lib/openrouter";
 import { buildPromptStack } from "@/lib/promptStack";
 import { CanonicalCharacterCard, ChatMessage, PromptStackConfig } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,14 +12,17 @@ type ChatPayload = {
   history?: ChatMessage[];
   userInput?: string;
   config?: PromptStackConfig;
-  llmApiKey?: string;
   model?: string;
 };
 
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as ChatPayload;
-  if (!body.character || !body.userInput || !body.llmApiKey || !body.model || !body.config) {
+  if (!body.character || !body.userInput || !body.model || !body.config) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+  const serverApiKey = getServerOpenRouterApiKey();
+  if (!serverApiKey) {
+    return NextResponse.json({ error: "Server API key missing" }, { status: 500 });
   }
 
   const stack = buildPromptStack({
@@ -27,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const upstream = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
     method: "POST",
-    headers: buildOpenRouterHeaders(body.llmApiKey),
+    headers: buildOpenRouterHeaders(serverApiKey),
     body: JSON.stringify({
       model: body.model,
       stream: true,
