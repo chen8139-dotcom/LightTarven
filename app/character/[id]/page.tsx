@@ -130,7 +130,7 @@ export default function CharacterPage() {
   return (
     <main className="space-y-4">
       <section
-        className="relative min-h-[70vh] overflow-hidden rounded-2xl border border-white/10"
+        className="relative h-[calc(100dvh-7.5rem)] min-h-[560px] overflow-hidden rounded-2xl border border-white/10"
         style={
           character.coverImageDataUrl
             ? { backgroundImage: `url(${character.coverImageDataUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -138,7 +138,7 @@ export default function CharacterPage() {
         }
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
-        <div className="relative z-10 flex h-full flex-col p-4 md:p-6">
+        <div className="relative z-10 flex h-full min-h-0 flex-col p-4 md:p-6">
           <header className="mb-4 rounded-2xl border border-white/20 bg-white/10 p-4 text-white backdrop-blur-md">
             <h2 className="text-xl font-semibold">{character.name}</h2>
             <p className="mt-1 text-sm text-zinc-100">{character.persona}</p>
@@ -171,7 +171,7 @@ export default function CharacterPage() {
             </div>
           </header>
 
-          <div className="mb-4 flex-1 overflow-y-auto rounded-2xl border border-white/15 bg-black/15 p-3 md:p-4">
+          <div className="mb-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-white/15 bg-black/15 p-3 md:p-4">
             <div className="space-y-3">
               {history.map((message, index) => {
                 const isUser = message.role === "user";
