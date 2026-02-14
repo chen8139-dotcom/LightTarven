@@ -29,9 +29,13 @@ function writeJSON(key: string, value: unknown): void {
 
 export function saveAccess(passcode: string): void {
   if (!isBrowser()) return;
-  localStorage.setItem(KEYS.accessGranted, "1");
-  localStorage.setItem(KEYS.passcode, passcode);
-  document.cookie = "lt_access=1; Path=/; SameSite=Lax";
+  try {
+    localStorage.setItem(KEYS.accessGranted, "1");
+    localStorage.setItem(KEYS.passcode, passcode);
+  } catch {
+    // Continue with cookie-only access when storage is restricted.
+  }
+  document.cookie = "lt_access=1; Path=/; Max-Age=2592000; SameSite=Lax";
 }
 
 export function clearAccess(): void {

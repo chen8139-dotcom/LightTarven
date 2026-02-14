@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { saveAccess } from "@/lib/storage";
 
 export default function HomePage() {
-  const router = useRouter();
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,18 +12,23 @@ export default function HomePage() {
     event.preventDefault();
     setError("");
     setLoading(true);
-    const result = await fetch("/api/access/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ passcode })
-    });
-    setLoading(false);
-    if (!result.ok) {
-      setError("口令错误，请重试。");
-      return;
+    try {
+      const result = await fetch("/api/access/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode: passcode.trim() })
+      });
+      if (!result.ok) {
+        setError("口令错误，请重试。");
+        return;
+      }
+      saveAccess(passcode.trim());
+      window.location.assign("/dashboard");
+    } catch {
+      setError("网络异常，请稍后重试。");
+    } finally {
+      setLoading(false);
     }
-    saveAccess(passcode);
-    router.push("/dashboard");
   };
 
   return (
