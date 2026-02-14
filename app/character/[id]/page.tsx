@@ -141,7 +141,6 @@ export default function CharacterPage() {
         <div className="relative z-10 flex h-full min-h-0 flex-col p-4 md:p-6">
           <header className="mb-4 rounded-2xl border border-white/20 bg-white/10 p-4 text-white backdrop-blur-md">
             <h2 className="text-xl font-semibold">{character.name}</h2>
-            <p className="mt-1 text-sm text-zinc-100">{character.persona}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
               <label>maxHistory</label>
               <input
