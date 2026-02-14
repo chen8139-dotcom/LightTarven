@@ -22,6 +22,7 @@ export default function CharacterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [debugConfig, setDebugConfig] = useState({ maxHistory: 12, includeExamples: true });
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -140,32 +141,14 @@ export default function CharacterPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
         <div className="relative z-10 flex h-full min-h-0 flex-col p-4 md:p-6">
           <header className="mb-4 rounded-2xl border border-white/20 bg-white/10 p-4 text-white backdrop-blur-md">
-            <h2 className="text-xl font-semibold">{character.name}</h2>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-              <label>maxHistory</label>
-              <input
-                type="number"
-                value={debugConfig.maxHistory}
-                onChange={(event) =>
-                  setDebugConfig((prev) => ({
-                    ...prev,
-                    maxHistory: Math.max(1, Number(event.target.value) || 1)
-                  }))
-                }
-                className="w-20 border-white/30 bg-black/30 text-white"
-              />
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={debugConfig.includeExamples}
-                  onChange={(event) =>
-                    setDebugConfig((prev) => ({ ...prev, includeExamples: event.target.checked }))
-                  }
-                />
-                includeExamples
-              </label>
-              <button onClick={onClear} className="border-white/30 bg-white/20 text-white">
-                清空对话
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold">{character.name}</h2>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="border-white/30 bg-white/15 px-3 py-1.5 text-sm text-white"
+                type="button"
+              >
+                聊天设置
               </button>
             </div>
           </header>
@@ -218,6 +201,56 @@ export default function CharacterPage() {
             </div>
           </form>
         </div>
+
+        {settingsOpen ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <section className="w-full max-w-md rounded-2xl border border-white/25 bg-zinc-900/80 p-4 text-white backdrop-blur-md">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-base font-semibold">聊天设置</h3>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(false)}
+                  className="border-white/30 bg-white/15 px-2 py-1 text-xs text-white"
+                >
+                  关闭
+                </button>
+              </div>
+              <div className="space-y-3 text-sm">
+                <label className="block">
+                  <span className="mb-1 block text-zinc-200">maxHistory</span>
+                  <input
+                    type="number"
+                    value={debugConfig.maxHistory}
+                    onChange={(event) =>
+                      setDebugConfig((prev) => ({
+                        ...prev,
+                        maxHistory: Math.max(1, Number(event.target.value) || 1)
+                      }))
+                    }
+                    className="w-full border-white/30 bg-black/35 text-white"
+                  />
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={debugConfig.includeExamples}
+                    onChange={(event) =>
+                      setDebugConfig((prev) => ({ ...prev, includeExamples: event.target.checked }))
+                    }
+                  />
+                  includeExamples
+                </label>
+                <button
+                  type="button"
+                  onClick={onClear}
+                  className="w-full border-white/30 bg-white/15 text-white"
+                >
+                  清空对话
+                </button>
+              </div>
+            </section>
+          </div>
+        ) : null}
       </section>
 
       {process.env.NODE_ENV === "development" && promptPreview ? (
