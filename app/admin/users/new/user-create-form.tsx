@@ -52,7 +52,7 @@ export default function CreateUserForm() {
         required
       />
       <button
-        className="w-fit rounded border border-zinc-700 bg-zinc-900 px-3 py-2 hover:bg-zinc-800 disabled:opacity-60"
+        className="w-fit rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800 disabled:text-zinc-500 disabled:opacity-60"
         type="submit"
         disabled={submitting}
       >
