@@ -83,8 +83,7 @@ export default function SettingsPage() {
 
   return (
     <main className="mx-auto max-w-xl rounded border border-zinc-800 p-4">
-      <h2 className="mb-4 text-lg font-semibold">模型设置（OpenRouter）</h2>
-      <p className="mb-3 text-sm text-zinc-300">API Key 由服务端环境变量托管，前端不可见。</p>
+      <h2 className="mb-4 text-lg font-semibold">模型设置</h2>
       <form onSubmit={save} className="space-y-3">
         <div className="flex gap-2">
           <select
