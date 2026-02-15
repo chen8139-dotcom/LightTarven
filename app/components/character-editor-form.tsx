@@ -3,6 +3,7 @@
 import { ChangeEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { processCoverImage } from "@/lib/image";
+import { importSillyTavernPng } from "@/lib/sillytavern";
 import { upsertCharacter } from "@/lib/storage";
 import { CanonicalCharacterCard } from "@/lib/types";
 
@@ -37,6 +38,8 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
   const isEditing = Boolean(initialCharacter);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [importStatus, setImportStatus] = useState("");
+  const [importedCard, setImportedCard] = useState<Partial<CanonicalCharacterCard> | null>(null);
   const [form, setForm] = useState<CharacterForm>(
     initialCharacter
       ? {
@@ -67,6 +70,33 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     }
   };
 
+  const onImportCardPng = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await importSillyTavernPng(file);
+      setImportedCard(result.fields);
+      setForm((prev) => ({
+        ...prev,
+        name: result.fields.name ?? prev.name,
+        description: result.fields.description ?? prev.description,
+        greeting: result.fields.first_mes ?? result.fields.greeting ?? prev.greeting,
+        persona: result.fields.personality ?? result.fields.persona ?? prev.persona,
+        coverImageDataUrl: result.coverImageDataUrl || prev.coverImageDataUrl,
+        scenario: result.fields.scenario ?? prev.scenario,
+        style: result.fields.style ?? prev.style,
+        rules: result.fields.rules ?? prev.rules
+      }));
+      setError("");
+      setImportStatus(result.metadataFound ? "已导入角色卡字段和封面" : "只导入了图片，未发现角色元数据");
+    } catch {
+      setImportStatus("");
+      setError("角色卡导入失败，请确认是包含 SillyTavern 元数据的 PNG。");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   const onSave = () => {
     if (saving) return;
     if (!form.name.trim() || !form.description.trim() || !form.greeting.trim()) {
@@ -78,6 +108,8 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     setError("");
 
     const next: CanonicalCharacterCard = {
+      ...(initialCharacter ?? {}),
+      ...(importedCard ?? {}),
       id: initialCharacter?.id ?? crypto.randomUUID(),
       name: form.name.trim(),
       description: form.description.trim(),
@@ -90,16 +122,26 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
       style: form.style.trim() || undefined,
       rules: form.rules.trim() || undefined,
       examples: initialCharacter?.examples ?? [],
-      metadata: { ...(initialCharacter?.metadata ?? {}), version: "v1" },
-      mes_example: initialCharacter?.mes_example,
-      creator_notes: initialCharacter?.creator_notes,
-      system_prompt: initialCharacter?.system_prompt,
-      post_history_instructions: initialCharacter?.post_history_instructions,
-      alternate_greetings: initialCharacter?.alternate_greetings ?? [],
-      tags: initialCharacter?.tags ?? initialCharacter?.metadata?.tags ?? [],
-      creator: initialCharacter?.creator,
-      character_version: initialCharacter?.character_version,
-      extensions: initialCharacter?.extensions ?? {}
+      metadata: {
+        ...(importedCard?.metadata ?? initialCharacter?.metadata ?? {}),
+        version: "v1"
+      },
+      mes_example: importedCard?.mes_example ?? initialCharacter?.mes_example,
+      creator_notes: importedCard?.creator_notes ?? initialCharacter?.creator_notes,
+      system_prompt: importedCard?.system_prompt ?? initialCharacter?.system_prompt,
+      post_history_instructions:
+        importedCard?.post_history_instructions ?? initialCharacter?.post_history_instructions,
+      alternate_greetings:
+        importedCard?.alternate_greetings ?? initialCharacter?.alternate_greetings ?? [],
+      tags:
+        importedCard?.tags ??
+        initialCharacter?.tags ??
+        importedCard?.metadata?.tags ??
+        initialCharacter?.metadata?.tags ??
+        [],
+      creator: importedCard?.creator ?? initialCharacter?.creator,
+      character_version: importedCard?.character_version ?? initialCharacter?.character_version,
+      extensions: importedCard?.extensions ?? initialCharacter?.extensions ?? {}
     };
 
     upsertCharacter(next);
@@ -113,7 +155,18 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
       <div className="space-y-2">
         <div className="space-y-2 rounded border border-zinc-800 p-3">
           <p className="text-sm text-zinc-300">角色封面（聊天背景）</p>
-          <input type="file" accept="image/*" onChange={onUploadCover} className="w-full" />
+          <div className="flex flex-wrap gap-2">
+            <input type="file" accept="image/*" onChange={onUploadCover} className="w-full" />
+            <label className="cursor-pointer rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm">
+              导入 PNG 角色卡
+              <input
+                type="file"
+                accept=".png,image/png"
+                onChange={onImportCardPng}
+                className="hidden"
+              />
+            </label>
+          </div>
           {form.coverImageDataUrl ? (
             <div className="flex h-40 items-center justify-center rounded bg-zinc-950 p-2">
               <img
@@ -133,6 +186,7 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
               清除封面
             </button>
           ) : null}
+          {importStatus ? <p className="text-xs text-emerald-300">{importStatus}</p> : null}
         </div>
         <input
           value={form.name}
