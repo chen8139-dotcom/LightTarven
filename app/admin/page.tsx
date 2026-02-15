@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthenticatedProfile, isProfileActive } from "@/lib/auth";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import UserAdminControls from "@/app/admin/user-admin-controls";
 
 type UserRow = {
   id: string;
@@ -37,8 +38,16 @@ export default async function AdminPage() {
   return (
     <main className="space-y-4">
       <section className="rounded border border-zinc-800 p-4">
-        <h2 className="mb-3 text-lg font-semibold">管理后台（只读）</h2>
-        <p className="mb-3 text-sm text-zinc-400">仅展示用户、角色和聊天数据，不提供写操作。</p>
+        <h2 className="mb-3 text-lg font-semibold">管理后台</h2>
+        <p className="mb-3 text-sm text-zinc-400">支持创建用户、禁用/启用用户，以及查看数据详情。</p>
+        <UserAdminControls
+          users={(users as UserRow[] | null) ?? []}
+          currentAdminId={profile.id}
+        />
+      </section>
+
+      <section className="rounded border border-zinc-800 p-4">
+        <h3 className="mb-3 text-base font-semibold">用户列表</h3>
         <div className="overflow-auto rounded border border-zinc-800">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-zinc-900 text-zinc-300">
