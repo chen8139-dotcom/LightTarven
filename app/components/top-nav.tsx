@@ -24,6 +24,7 @@ export default function TopNav() {
   const pathname = usePathname();
   const [authenticated, setAuthenticated] = useState(false);
   const [role, setRole] = useState<"admin" | "user">("user");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -43,6 +44,21 @@ export default function TopNav() {
     loadSession();
   }, [pathname]);
 
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDrawerOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [drawerOpen]);
+
   const onLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.assign("/");
@@ -53,21 +69,62 @@ export default function TopNav() {
   }
 
   return (
-    <nav className="ml-auto flex gap-2 text-sm">
-      <Link href="/dashboard" className={navClass(pathname.startsWith("/dashboard"))}>
-        角色列表
-      </Link>
-      <Link href="/settings" className={navClass(pathname.startsWith("/settings"))}>
-        模型设置
-      </Link>
-      {role === "admin" ? (
-        <Link href="/admin" className={navClass(pathname.startsWith("/admin"))}>
-          管理后台
+    <>
+      <nav className="ml-auto hidden gap-2 text-sm md:flex">
+        <Link href="/dashboard" className={navClass(pathname.startsWith("/dashboard"))}>
+          角色列表
         </Link>
+        <Link href="/settings" className={navClass(pathname.startsWith("/settings"))}>
+          模型设置
+        </Link>
+        {role === "admin" ? (
+          <Link href="/admin" className={navClass(pathname.startsWith("/admin"))}>
+            管理后台
+          </Link>
+        ) : null}
+        <button className={navClass(false)} onClick={onLogout} type="button">
+          退出登录
+        </button>
+      </nav>
+
+      <div className="ml-auto md:hidden">
+        <button className={navClass(false)} onClick={() => setDrawerOpen(true)} type="button">
+          菜单
+        </button>
+      </div>
+
+      {drawerOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setDrawerOpen(false)}
+            type="button"
+            aria-label="关闭菜单"
+          />
+          <aside className="absolute right-0 top-0 h-full w-72 space-y-3 border-l border-zinc-700 bg-zinc-950 p-4 shadow-2xl">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-semibold text-zinc-200">导航菜单</p>
+              <button className={navClass(false)} onClick={() => setDrawerOpen(false)} type="button">
+                关闭
+              </button>
+            </div>
+            <Link href="/dashboard" className={navClass(pathname.startsWith("/dashboard"))}>
+              角色列表
+            </Link>
+            <Link href="/settings" className={navClass(pathname.startsWith("/settings"))}>
+              模型设置
+            </Link>
+            {role === "admin" ? (
+              <Link href="/admin" className={navClass(pathname.startsWith("/admin"))}>
+                管理后台
+              </Link>
+            ) : null}
+            <button className={navClass(false)} onClick={onLogout} type="button">
+              退出登录
+            </button>
+          </aside>
+        </div>
       ) : null}
-      <button className={navClass(false)} onClick={onLogout} type="button">
-        退出登录
-      </button>
-    </nav>
+    </>
   );
 }
