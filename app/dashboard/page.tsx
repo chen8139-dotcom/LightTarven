@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CanonicalCharacterCard } from "@/lib/types";
-import { exportCharactersJSON, getCharacters, removeCharacter } from "@/lib/storage";
+import { getCharacters, removeCharacter, resetLocalCharacterData } from "@/lib/storage";
 
 export default function DashboardPage() {
   const [characters, setCharacters] = useState<CanonicalCharacterCard[]>([]);
@@ -18,14 +18,13 @@ export default function DashboardPage() {
     refresh();
   };
 
-  const onExport = () => {
-    const blob = new Blob([exportCharactersJSON()], { type: "application/json" });
-    const href = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = href;
-    anchor.download = "light-tavern-characters.json";
-    anchor.click();
-    URL.revokeObjectURL(href);
+  const onResetLocalData = () => {
+    const confirmed = window.confirm(
+      "确认重置本地数据？\n这将删除当前浏览器本地存储中的角色与聊天记录信息。"
+    );
+    if (!confirmed) return;
+    resetLocalCharacterData();
+    refresh();
   };
 
   return (
@@ -36,7 +35,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/new">
             <button>添加角色</button>
           </Link>
-          <button onClick={onExport}>导出 JSON</button>
+          <button onClick={onResetLocalData}>重置本地数据</button>
         </div>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {characters.map((character) => (

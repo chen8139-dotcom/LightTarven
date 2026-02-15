@@ -125,6 +125,23 @@ export function exportCharactersJSON(): string {
   return JSON.stringify(getCharacters(), null, 2);
 }
 
+export function resetLocalCharacterData(): void {
+  if (!isBrowser()) return;
+  localStorage.removeItem(KEYS.characters);
+  localStorage.removeItem(KEYS.currentChatId);
+
+  const historyKeys: string[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith("lt_chat_history_v1_")) {
+      historyKeys.push(key);
+    }
+  }
+  for (const key of historyKeys) {
+    localStorage.removeItem(key);
+  }
+}
+
 export function importCharactersJSON(raw: string): { imported: number } {
   const parsed = JSON.parse(raw) as unknown;
   if (!Array.isArray(parsed)) {
