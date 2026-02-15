@@ -71,7 +71,23 @@ sequenceDiagram
   API->>DB: 更新 conversations.updated_at
 ```
 
-## 5. 管理后台流
+## 5. 聊天初始化流（进入角色页）
+
+```mermaid
+sequenceDiagram
+  participant P as /character/[id]
+  participant API as GET /api/cloud/chat-init
+  participant DB as Supabase(Postgres)
+
+  P->>API: characterId
+  API->>DB: 校验用户与角色归属
+  API->>DB: 获取最近会话(无则创建)
+  API->>DB: 读取消息历史
+  API->>API: 问候语初始化/修正
+  API-->>P: character + model + chat + messages
+```
+
+## 6. 管理后台流
 
 ```mermaid
 flowchart TD
@@ -83,7 +99,7 @@ flowchart TD
   Guard --> SDB[(profiles)]
 ```
 
-## 6. 数据实体关系
+## 7. 数据实体关系
 
 ```mermaid
 erDiagram

@@ -68,6 +68,30 @@ Base URL: `/api`
 
 ## 3. Chats
 
+### GET `/api/cloud/chat-init?characterId=<id>`
+- 作用：聊天页初始化聚合接口（角色 + 当前模型 + 会话 + 消息）
+- 行为：
+  - 读取角色，不存在返回 `404`
+  - 拉取该角色最近会话，不存在则自动创建默认会话
+  - 读取会话消息，并按角色 greeting 自动初始化或修正首条 assistant 消息
+- 响应：
+```json
+{
+  "character": { "id": "uuid", "name": "角色名", "persona": "..." },
+  "model": "openai/gpt-4o-mini",
+  "chat": {
+    "id": "uuid",
+    "characterId": "uuid",
+    "title": "默认会话",
+    "createdAt": "...",
+    "updatedAt": "..."
+  },
+  "messages": [
+    { "role": "assistant", "content": "你好", "timestamp": 1730000000000 }
+  ]
+}
+```
+
 ### GET `/api/cloud/chats?characterId=<id>`
 - 作用：列出会话，可按角色过滤
 - 响应：

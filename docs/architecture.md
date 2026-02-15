@@ -49,6 +49,12 @@ LightTavern 是一个基于角色卡的聊天应用，支持：
 - 管理页额外要求 `profiles.role = 'admin'`
 
 ### 4.2 聊天链路
+#### 初始化阶段（进入 `/character/[id]`）
+1. 前端调用 `GET /api/cloud/chat-init?characterId=...`
+2. 后端一次性完成：角色读取、会话获取/创建、消息加载、问候语修正
+3. 返回聚合结果：`character + model + chat + messages`
+
+#### 生成阶段（发送消息）
 1. 前端提交 `characterId/chatId/userInput/model/config` 到 `POST /api/chat`
 2. 后端拉取角色信息与历史消息
 3. 使用 `buildPromptStack` 生成 OpenRouter `messages`
