@@ -111,9 +111,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing required fields: name" }, { status: 400 });
   }
   const resolvedPersona =
-    payload.persona?.trim() ||
-    payload.personality?.trim() ||
-    "未设置";
+    payload.persona?.trim() ??
+    payload.personality?.trim() ??
+    "";
 
   let coverImageUrl: string | null = null;
   let coverImagePath: string | null = null;
