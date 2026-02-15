@@ -79,14 +79,14 @@ export default function TopNav() {
   return (
     <>
       <nav className="ml-auto hidden gap-2 text-sm md:flex">
-        <Link href="/dashboard" className={navClass(pathname.startsWith("/dashboard"))}>
+        <Link href="/dashboard" prefetch={false} className={navClass(pathname.startsWith("/dashboard"))}>
           角色列表
         </Link>
-        <Link href="/settings" className={navClass(pathname.startsWith("/settings"))}>
+        <Link href="/settings" prefetch={false} className={navClass(pathname.startsWith("/settings"))}>
           模型设置
         </Link>
         {role === "admin" ? (
-          <Link href="/admin" className={navClass(pathname.startsWith("/admin"))}>
+          <Link href="/admin" prefetch={false} className={navClass(pathname.startsWith("/admin"))}>
             管理后台
           </Link>
         ) : null}
@@ -117,14 +117,14 @@ export default function TopNav() {
               </button>
             </div>
             <div className="space-y-2">
-              <Link href="/dashboard" className={mobileItemClass(pathname.startsWith("/dashboard"))}>
+              <Link href="/dashboard" prefetch={false} className={mobileItemClass(pathname.startsWith("/dashboard"))}>
                 角色列表
               </Link>
-              <Link href="/settings" className={mobileItemClass(pathname.startsWith("/settings"))}>
+              <Link href="/settings" prefetch={false} className={mobileItemClass(pathname.startsWith("/settings"))}>
                 模型设置
               </Link>
               {role === "admin" ? (
-                <Link href="/admin" className={mobileItemClass(pathname.startsWith("/admin"))}>
+                <Link href="/admin" prefetch={false} className={mobileItemClass(pathname.startsWith("/admin"))}>
                   管理后台
                 </Link>
               ) : null}
