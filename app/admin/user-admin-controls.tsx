@@ -18,9 +18,9 @@ type Props = {
 
 export default function UserAdminControls({ users, currentAdminId }: Props) {
   const router = useRouter();
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"admin" | "user">("user");
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState("");
@@ -33,7 +33,7 @@ export default function UserAdminControls({ users, currentAdminId }: Props) {
       const response = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role })
+        body: JSON.stringify({ email, password })
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) {
@@ -43,7 +43,7 @@ export default function UserAdminControls({ users, currentAdminId }: Props) {
       setStatus("创建成功");
       setEmail("");
       setPassword("");
-      setRole("user");
+      setShowCreateForm(false);
       router.refresh();
     } catch {
       setStatus("创建失败：网络错误");
@@ -82,39 +82,47 @@ export default function UserAdminControls({ users, currentAdminId }: Props) {
 
   return (
     <div className="space-y-3">
-      <form className="grid gap-2 md:grid-cols-4" onSubmit={onCreateUser}>
-        <input
-          className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2"
-          placeholder="邮箱"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
-        <input
-          className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2"
-          placeholder="密码（至少 8 位）"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
-        <select
-          className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2"
-          value={role}
-          onChange={(event) => setRole(event.target.value === "admin" ? "admin" : "user")}
-        >
-          <option value="user">user</option>
-          <option value="admin">admin</option>
-        </select>
+      <div className="flex items-center gap-2">
         <button
           className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2 hover:bg-zinc-800 disabled:opacity-60"
-          type="submit"
+          type="button"
+          onClick={() => {
+            setStatus("");
+            setShowCreateForm((prev) => !prev);
+          }}
           disabled={submitting}
         >
-          {submitting ? "创建中..." : "创建用户"}
+          {showCreateForm ? "取消" : "添加用户"}
         </button>
-      </form>
+      </div>
+
+      {showCreateForm ? (
+        <form className="grid gap-2 md:grid-cols-3" onSubmit={onCreateUser}>
+          <input
+            className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2"
+            placeholder="邮箱"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+          <input
+            className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2"
+            placeholder="密码（至少 8 位）"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
+          <button
+            className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2 hover:bg-zinc-800 disabled:opacity-60"
+            type="submit"
+            disabled={submitting}
+          >
+            {submitting ? "创建中..." : "确认添加"}
+          </button>
+        </form>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         {users.map((user) => (

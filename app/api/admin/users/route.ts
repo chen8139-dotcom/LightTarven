@@ -5,7 +5,6 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 type CreateUserPayload = {
   email?: string;
   password?: string;
-  role?: "admin" | "user";
 };
 
 export async function POST(request: NextRequest) {
@@ -17,7 +16,6 @@ export async function POST(request: NextRequest) {
   const payload = (await request.json()) as CreateUserPayload;
   const email = payload.email?.trim().toLowerCase() ?? "";
   const password = payload.password ?? "";
-  const role: "admin" | "user" = payload.role === "admin" ? "admin" : "user";
 
   if (!email || !password) {
     return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
@@ -40,7 +38,7 @@ export async function POST(request: NextRequest) {
   const { error: profileError } = await adminClient
     .from("profiles")
     .update({
-      role,
+      role: "user",
       disabled_at: null,
       deleted_at: null,
       email
@@ -56,7 +54,7 @@ export async function POST(request: NextRequest) {
     user: {
       id: data.user.id,
       email,
-      role
+      role: "user"
     }
   });
 }
