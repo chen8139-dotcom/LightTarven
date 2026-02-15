@@ -61,6 +61,7 @@ create index if not exists idx_conversations_user_id on public.conversations(use
 create index if not exists idx_conversations_character_id on public.conversations(character_id);
 create index if not exists idx_messages_conversation_id on public.messages(conversation_id);
 create index if not exists idx_messages_user_id on public.messages(user_id);
+create index if not exists idx_profiles_created_at_desc on public.profiles(created_at desc);
 
 create or replace function public.touch_updated_at()
 returns trigger as $$

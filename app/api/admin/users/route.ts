@@ -7,6 +7,29 @@ type CreateUserPayload = {
   password?: string;
 };
 
+export async function GET(request: NextRequest) {
+  const { profile } = await getAuthenticatedProfile();
+  if (!isProfileActive(profile) || !profile || profile.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const limitParam = Number(request.nextUrl.searchParams.get("limit") ?? "100");
+  const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 200) : 100;
+
+  const adminClient = getSupabaseAdminClient();
+  const { data: users, error } = await adminClient
+    .from("profiles")
+    .select("id,email,role,disabled_at,deleted_at,created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ users: users ?? [] }, { status: 200 });
+}
+
 export async function POST(request: NextRequest) {
   const { profile } = await getAuthenticatedProfile();
   if (!isProfileActive(profile) || !profile || profile.role !== "admin") {
