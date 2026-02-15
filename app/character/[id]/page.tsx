@@ -147,7 +147,12 @@ export default function CharacterPage() {
         className="relative h-[calc(100dvh-7.5rem)] min-h-[560px] overflow-hidden rounded-2xl border border-white/10"
         style={
           character.coverImageDataUrl
-            ? { backgroundImage: `url(${character.coverImageDataUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+            ? {
+                backgroundImage: `url(${character.coverImageDataUrl})`,
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat"
+              }
             : undefined
         }
       >

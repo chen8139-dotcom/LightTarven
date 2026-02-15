@@ -2,21 +2,10 @@ export async function processCoverImage(file: File): Promise<string> {
   const imageBitmap = await readImage(file);
   const sourceWidth = imageBitmap.width;
   const sourceHeight = imageBitmap.height;
-  const sourceRatio = sourceWidth / sourceHeight;
-  const targetRatio = 16 / 9;
-
-  let cropWidth = sourceWidth;
-  let cropHeight = sourceHeight;
-  if (sourceRatio > targetRatio) {
-    cropWidth = Math.round(sourceHeight * targetRatio);
-  } else {
-    cropHeight = Math.round(sourceWidth / targetRatio);
-  }
-
-  const cropX = Math.max(0, Math.round((sourceWidth - cropWidth) / 2));
-  const cropY = Math.max(0, Math.round((sourceHeight - cropHeight) / 2));
-  const outputWidth = Math.min(2048, cropWidth);
-  const outputHeight = Math.round(outputWidth / targetRatio);
+  const maxDimension = 2048;
+  const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+  const outputWidth = Math.max(1, Math.round(sourceWidth * scale));
+  const outputHeight = Math.max(1, Math.round(sourceHeight * scale));
 
   const canvas = document.createElement("canvas");
   canvas.width = outputWidth;
@@ -28,10 +17,10 @@ export async function processCoverImage(file: File): Promise<string> {
 
   context.drawImage(
     imageBitmap,
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
+    0,
+    0,
+    sourceWidth,
+    sourceHeight,
     0,
     0,
     outputWidth,
