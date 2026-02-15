@@ -115,10 +115,13 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
           <p className="text-sm text-zinc-300">角色封面（聊天背景）</p>
           <input type="file" accept="image/*" onChange={onUploadCover} className="w-full" />
           {form.coverImageDataUrl ? (
-            <div
-              className="h-24 rounded bg-cover bg-center"
-              style={{ backgroundImage: `url(${form.coverImageDataUrl})` }}
-            />
+            <div className="flex h-40 items-center justify-center rounded bg-zinc-950 p-2">
+              <img
+                src={form.coverImageDataUrl}
+                alt="角色封面预览"
+                className="max-h-full w-full rounded object-contain"
+              />
+            </div>
           ) : (
             <p className="text-xs text-zinc-500">未上传封面图</p>
           )}
