@@ -29,7 +29,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const disabledAt = payload.action === "disable" ? new Date().toISOString() : null;
   const { error } = await adminClient
     .from("profiles")
-    .update({ disabled_at: disabledAt, deleted_at: null })
+    .update({ disabled_at: disabledAt })
     .eq("id", id);
 
   if (error) {
