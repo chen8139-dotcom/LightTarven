@@ -94,6 +94,35 @@ export function exportCharactersJSON(): string {
   return JSON.stringify(getCharacters(), null, 2);
 }
 
+export function importCharactersJSON(raw: string): { imported: number } {
+  const parsed = JSON.parse(raw) as unknown;
+  if (!Array.isArray(parsed)) {
+    throw new Error("JSON 必须是数组格式");
+  }
+
+  const current = getCharacters();
+  const byId = new Map(current.map((item) => [item.id, item] as const));
+  let imported = 0;
+
+  for (const item of parsed) {
+    if (!item || typeof item !== "object") continue;
+    const candidate = item as Partial<CanonicalCharacterCard>;
+    const persona = candidate.persona || candidate.personality;
+    if (!candidate.id || !candidate.name || !persona) continue;
+    byId.set(candidate.id, {
+      ...candidate,
+      id: candidate.id,
+      name: candidate.name,
+      persona,
+      coverImageDataUrl: candidate.coverImageDataUrl
+    } as CanonicalCharacterCard);
+    imported += 1;
+  }
+
+  writeJSON(KEYS.characters, Array.from(byId.values()));
+  return { imported };
+}
+
 export function getHistoryKey(characterId: string): string {
   return `lt_chat_history_v1_${characterId}`;
 }
