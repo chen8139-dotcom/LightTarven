@@ -20,6 +20,7 @@ export default function CharacterPage() {
   const [debugConfig, setDebugConfig] = useState({ maxHistory: 12, includeExamples: true });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentModel, setCurrentModel] = useState("openai/gpt-4o-mini");
+  const [historyLoading, setHistoryLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -40,50 +41,56 @@ export default function CharacterPage() {
           chat = await createChat(characterId, "默认会话");
         }
         setActiveChat(chat);
-
-        const messages = await getChatMessages(chat.id);
-        const greeting = currentCharacter.greeting?.trim() || currentCharacter.first_mes?.trim() || "";
-        if (messages.length > 0) {
-          const hasUserMessage = messages.some((item) => item.role === "user");
-          const onlyAssistantMessages = messages.every((item) => item.role === "assistant");
-          if (greeting && !hasUserMessage && onlyAssistantMessages) {
-            const onlyMessage = messages[0];
-            if (messages.length === 1 && onlyMessage && onlyMessage.content.trim() !== greeting) {
-              const greetingMessage: ChatMessage = {
-                role: "assistant",
-                content: greeting,
-                timestamp: Date.now()
-              };
-              setHistory([greetingMessage]);
-              await fetch(`/api/cloud/chats/${chat.id}/messages`, { method: "DELETE" });
-              await fetch(`/api/cloud/chats/${chat.id}/messages`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ role: "assistant", content: greeting })
-              });
+        setHistoryLoading(true);
+        void (async () => {
+          try {
+            const messages = await getChatMessages(chat.id);
+            const greeting = currentCharacter.greeting?.trim() || currentCharacter.first_mes?.trim() || "";
+            if (messages.length > 0) {
+              const hasUserMessage = messages.some((item) => item.role === "user");
+              const onlyAssistantMessages = messages.every((item) => item.role === "assistant");
+              if (greeting && !hasUserMessage && onlyAssistantMessages) {
+                const onlyMessage = messages[0];
+                if (messages.length === 1 && onlyMessage && onlyMessage.content.trim() !== greeting) {
+                  const greetingMessage: ChatMessage = {
+                    role: "assistant",
+                    content: greeting,
+                    timestamp: Date.now()
+                  };
+                  setHistory([greetingMessage]);
+                  await fetch(`/api/cloud/chats/${chat.id}/messages`, { method: "DELETE" });
+                  await fetch(`/api/cloud/chats/${chat.id}/messages`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ role: "assistant", content: greeting })
+                  });
+                  return;
+                }
+              }
+              setHistory(messages);
               return;
             }
+
+            if (!greeting) {
+              setHistory([]);
+              return;
+            }
+
+            const greetingMessage: ChatMessage = {
+              role: "assistant",
+              content: greeting,
+              timestamp: Date.now()
+            };
+            setHistory([greetingMessage]);
+            await fetch(`/api/cloud/chats/${chat.id}/messages`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ role: "assistant", content: greeting })
+            });
+          } finally {
+            setHistoryLoading(false);
           }
-          setHistory(messages);
-          return;
-        }
-
-        if (!greeting) {
-          setHistory([]);
-          return;
-        }
-
-        const greetingMessage: ChatMessage = {
-          role: "assistant",
-          content: greeting,
-          timestamp: Date.now()
-        };
-        setHistory([greetingMessage]);
-        await fetch(`/api/cloud/chats/${chat.id}/messages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role: "assistant", content: greeting })
-        });
+        })();
       } catch (err) {
         setError(err instanceof Error ? err.message : "加载失败");
       }
@@ -280,6 +287,7 @@ export default function CharacterPage() {
                   </div>
                 );
               })}
+              {historyLoading ? <p className="text-sm text-zinc-200/80">加载消息中...</p> : null}
               {!history.length ? <p className="text-sm text-zinc-200/80">开始对话吧</p> : null}
               <div ref={messagesEndRef} />
             </div>
