@@ -18,8 +18,14 @@ function navClass(active: boolean): string {
 export default function TopNav() {
   const pathname = usePathname();
   const [currentChatId, setCurrentChat] = useState("");
+  const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
+    const cookieAccess = document.cookie
+      .split(";")
+      .map((item) => item.trim())
+      .includes("lt_access=1");
+    setHasAccess(cookieAccess);
     setCurrentChat(getCurrentChatId());
   }, [pathname]);
 
@@ -27,6 +33,10 @@ export default function TopNav() {
     if (!currentChatId) return false;
     return getHistory(currentChatId).length > 0;
   }, [currentChatId]);
+
+  if (!hasAccess) {
+    return null;
+  }
 
   const inCurrentChat = currentChatId ? pathname === `/character/${currentChatId}` : false;
 
