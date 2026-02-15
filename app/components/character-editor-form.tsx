@@ -69,8 +69,8 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
 
   const onSave = () => {
     if (saving) return;
-    if (!form.name.trim() || !form.description.trim() || !form.greeting.trim() || !form.persona.trim()) {
-      setError("请填写角色名称、Description、开场白和 Personality。");
+    if (!form.name.trim() || !form.description.trim() || !form.greeting.trim()) {
+      setError("请填写角色名称、Description 和开场白。");
       return;
     }
 
@@ -111,6 +111,26 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     <main className="mx-auto max-w-3xl rounded border border-zinc-800 p-4">
       <h2 className="mb-3 text-lg font-semibold">{title}</h2>
       <div className="space-y-2">
+        <div className="space-y-2 rounded border border-zinc-800 p-3">
+          <p className="text-sm text-zinc-300">角色封面（聊天背景）</p>
+          <input type="file" accept="image/*" onChange={onUploadCover} className="w-full" />
+          {form.coverImageDataUrl ? (
+            <div
+              className="h-24 rounded bg-cover bg-center"
+              style={{ backgroundImage: `url(${form.coverImageDataUrl})` }}
+            />
+          ) : (
+            <p className="text-xs text-zinc-500">未上传封面图</p>
+          )}
+          {form.coverImageDataUrl ? (
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, coverImageDataUrl: "" }))}
+            >
+              清除封面
+            </button>
+          ) : null}
+        </div>
         <input
           value={form.name}
           onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
@@ -134,30 +154,10 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
         <textarea
           value={form.persona}
           onChange={(event) => setForm((prev) => ({ ...prev, persona: event.target.value }))}
-          placeholder="Personality（必填）"
+          placeholder="Personality（选填）"
           rows={5}
           className="w-full"
         />
-        <div className="space-y-2 rounded border border-zinc-800 p-3">
-          <p className="text-sm text-zinc-300">角色封面（聊天背景）</p>
-          <input type="file" accept="image/*" onChange={onUploadCover} className="w-full" />
-          {form.coverImageDataUrl ? (
-            <div
-              className="h-24 rounded bg-cover bg-center"
-              style={{ backgroundImage: `url(${form.coverImageDataUrl})` }}
-            />
-          ) : (
-            <p className="text-xs text-zinc-500">未上传封面图</p>
-          )}
-          {form.coverImageDataUrl ? (
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, coverImageDataUrl: "" }))}
-            >
-              清除封面
-            </button>
-          ) : null}
-        </div>
         <textarea
           value={form.scenario}
           onChange={(event) => setForm((prev) => ({ ...prev, scenario: event.target.value }))}
