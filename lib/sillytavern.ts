@@ -75,6 +75,20 @@ export async function importSillyTavernPng(file: File): Promise<SillyTavernImpor
   };
 }
 
+export async function exportSillyTavernPng(card: Partial<CanonicalCharacterCard>): Promise<Blob> {
+  const payload = encodeBase64Utf8(
+    JSON.stringify({
+      data: buildSillyTavernCard(card)
+    })
+  );
+  const basePng = await renderBasePng(card.coverImageDataUrl);
+  const output = injectTextChunks(basePng, [
+    createTextChunk("chara", payload),
+    createTextChunk("ccv3", payload)
+  ]);
+  return new Blob([output], { type: "image/png" });
+}
+
 function readPngTextChunks(buffer: ArrayBuffer): TextChunkMap {
   const bytes = new Uint8Array(buffer);
   if (!hasPngSignature(bytes)) {
@@ -236,4 +250,164 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 
 function normalizeStringArray(value: string[] | undefined): string[] {
   return (value ?? []).map((item) => item.trim()).filter(Boolean);
+}
+
+function buildSillyTavernCard(card: Partial<CanonicalCharacterCard>): SillyTavernCardData {
+  const persona = (card.personality ?? card.persona ?? "").trim();
+  const firstMes = (card.first_mes ?? card.greeting ?? "").trim();
+  return {
+    name: (card.name ?? "").trim(),
+    description: (card.description ?? "").trim(),
+    personality: persona,
+    scenario: (card.scenario ?? "").trim(),
+    first_mes: firstMes,
+    mes_example: (card.mes_example ?? "").trim(),
+    creator_notes: (card.creator_notes ?? "").trim(),
+    system_prompt: (card.system_prompt ?? "").trim(),
+    post_history_instructions: (card.post_history_instructions ?? "").trim(),
+    alternate_greetings: normalizeStringArray(card.alternate_greetings),
+    tags: normalizeStringArray(card.tags ?? card.metadata?.tags),
+    creator: (card.creator ?? "").trim(),
+    character_version: (card.character_version ?? "main").trim(),
+    extensions: card.extensions ?? {}
+  };
+}
+
+async function renderBasePng(coverImageDataUrl?: string): Promise<ArrayBuffer> {
+  const canvas = document.createElement("canvas");
+  canvas.width = 768;
+  canvas.height = 1024;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("无法创建画布上下文");
+  }
+
+  context.fillStyle = "#111827";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (coverImageDataUrl) {
+    const image = await loadImage(coverImageDataUrl);
+    const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+    const drawWidth = image.width * scale;
+    const drawHeight = image.height * scale;
+    const offsetX = (canvas.width - drawWidth) / 2;
+    const offsetY = (canvas.height - drawHeight) / 2;
+    context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+  }
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/png");
+  });
+  if (!blob) {
+    throw new Error("无法导出 PNG");
+  }
+  return blob.arrayBuffer();
+}
+
+function createTextChunk(keyword: string, value: string): Uint8Array {
+  const encoder = new TextEncoder();
+  const keywordBytes = encoder.encode(keyword);
+  const valueBytes = encoder.encode(value);
+  const data = new Uint8Array(keywordBytes.length + 1 + valueBytes.length);
+  data.set(keywordBytes, 0);
+  data[keywordBytes.length] = 0;
+  data.set(valueBytes, keywordBytes.length + 1);
+  return createChunk("tEXt", data);
+}
+
+function injectTextChunks(basePng: ArrayBuffer, textChunks: Uint8Array[]): Uint8Array {
+  const bytes = new Uint8Array(basePng);
+  if (!hasPngSignature(bytes)) {
+    throw new Error("不是有效的 PNG 文件");
+  }
+
+  const output: number[] = [];
+  output.push(...PNG_SIGNATURE);
+
+  let offset = 8;
+  while (offset + 12 <= bytes.length) {
+    const length = readUint32(bytes, offset);
+    const type = readAscii(bytes, offset + 4, 4);
+    const end = offset + 12 + length;
+    if (end > bytes.length) break;
+
+    if (type === "IEND") {
+      for (const textChunk of textChunks) {
+        output.push(...textChunk);
+      }
+    }
+    output.push(...bytes.slice(offset, end));
+    offset = end;
+    if (type === "IEND") break;
+  }
+
+  return Uint8Array.from(output);
+}
+
+function createChunk(type: string, data: Uint8Array): Uint8Array {
+  const typeBytes = new TextEncoder().encode(type);
+  const chunk = new Uint8Array(4 + 4 + data.length + 4);
+  writeUint32(chunk, 0, data.length);
+  chunk.set(typeBytes, 4);
+  chunk.set(data, 8);
+
+  const crcInput = new Uint8Array(typeBytes.length + data.length);
+  crcInput.set(typeBytes, 0);
+  crcInput.set(data, typeBytes.length);
+  writeUint32(chunk, 8 + data.length, crc32(crcInput));
+  return chunk;
+}
+
+function readUint32(bytes: Uint8Array, offset: number): number {
+  return (
+    (bytes[offset] << 24) |
+    (bytes[offset + 1] << 16) |
+    (bytes[offset + 2] << 8) |
+    bytes[offset + 3]
+  ) >>> 0;
+}
+
+function writeUint32(bytes: Uint8Array, offset: number, value: number): void {
+  bytes[offset] = (value >>> 24) & 0xff;
+  bytes[offset + 1] = (value >>> 16) & 0xff;
+  bytes[offset + 2] = (value >>> 8) & 0xff;
+  bytes[offset + 3] = value & 0xff;
+}
+
+function encodeBase64Utf8(raw: string): string {
+  const bytes = new TextEncoder().encode(raw);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i += 1) {
+    let c = i;
+    for (let j = 0; j < 8; j += 1) {
+      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[i] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes: Uint8Array): number {
+  let c = 0xffffffff;
+  for (let i = 0; i < bytes.length; i += 1) {
+    c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("图片加载失败"));
+    image.src = src;
+  });
 }

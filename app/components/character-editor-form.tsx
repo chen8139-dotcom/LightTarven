@@ -3,7 +3,7 @@
 import { ChangeEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { processCoverImage } from "@/lib/image";
-import { importSillyTavernPng } from "@/lib/sillytavern";
+import { exportSillyTavernPng, importSillyTavernPng } from "@/lib/sillytavern";
 import { upsertCharacter } from "@/lib/storage";
 import { CanonicalCharacterCard } from "@/lib/types";
 
@@ -57,6 +57,45 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
 
   const title = useMemo(() => (isEditing ? "编辑角色" : "创建角色"), [isEditing]);
 
+  const buildCurrentCard = (): CanonicalCharacterCard => {
+    return {
+      ...(initialCharacter ?? {}),
+      ...(importedCard ?? {}),
+      id: initialCharacter?.id ?? crypto.randomUUID(),
+      name: form.name.trim(),
+      description: form.description.trim(),
+      greeting: form.greeting.trim(),
+      first_mes: form.greeting.trim(),
+      persona: form.persona.trim(),
+      personality: form.persona.trim(),
+      coverImageDataUrl: form.coverImageDataUrl.trim() || undefined,
+      scenario: form.scenario.trim() || undefined,
+      style: form.style.trim() || undefined,
+      rules: form.rules.trim() || undefined,
+      examples: initialCharacter?.examples ?? [],
+      metadata: {
+        ...(importedCard?.metadata ?? initialCharacter?.metadata ?? {}),
+        version: "v1"
+      },
+      mes_example: importedCard?.mes_example ?? initialCharacter?.mes_example,
+      creator_notes: importedCard?.creator_notes ?? initialCharacter?.creator_notes,
+      system_prompt: importedCard?.system_prompt ?? initialCharacter?.system_prompt,
+      post_history_instructions:
+        importedCard?.post_history_instructions ?? initialCharacter?.post_history_instructions,
+      alternate_greetings:
+        importedCard?.alternate_greetings ?? initialCharacter?.alternate_greetings ?? [],
+      tags:
+        importedCard?.tags ??
+        initialCharacter?.tags ??
+        importedCard?.metadata?.tags ??
+        initialCharacter?.metadata?.tags ??
+        [],
+      creator: importedCard?.creator ?? initialCharacter?.creator,
+      character_version: importedCard?.character_version ?? initialCharacter?.character_version,
+      extensions: importedCard?.extensions ?? initialCharacter?.extensions ?? {}
+    };
+  };
+
   const onUploadCover = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -107,46 +146,34 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     setSaving(true);
     setError("");
 
-    const next: CanonicalCharacterCard = {
-      ...(initialCharacter ?? {}),
-      ...(importedCard ?? {}),
-      id: initialCharacter?.id ?? crypto.randomUUID(),
-      name: form.name.trim(),
-      description: form.description.trim(),
-      greeting: form.greeting.trim(),
-      first_mes: form.greeting.trim(),
-      persona: form.persona.trim(),
-      personality: form.persona.trim(),
-      coverImageDataUrl: form.coverImageDataUrl.trim() || undefined,
-      scenario: form.scenario.trim() || undefined,
-      style: form.style.trim() || undefined,
-      rules: form.rules.trim() || undefined,
-      examples: initialCharacter?.examples ?? [],
-      metadata: {
-        ...(importedCard?.metadata ?? initialCharacter?.metadata ?? {}),
-        version: "v1"
-      },
-      mes_example: importedCard?.mes_example ?? initialCharacter?.mes_example,
-      creator_notes: importedCard?.creator_notes ?? initialCharacter?.creator_notes,
-      system_prompt: importedCard?.system_prompt ?? initialCharacter?.system_prompt,
-      post_history_instructions:
-        importedCard?.post_history_instructions ?? initialCharacter?.post_history_instructions,
-      alternate_greetings:
-        importedCard?.alternate_greetings ?? initialCharacter?.alternate_greetings ?? [],
-      tags:
-        importedCard?.tags ??
-        initialCharacter?.tags ??
-        importedCard?.metadata?.tags ??
-        initialCharacter?.metadata?.tags ??
-        [],
-      creator: importedCard?.creator ?? initialCharacter?.creator,
-      character_version: importedCard?.character_version ?? initialCharacter?.character_version,
-      extensions: importedCard?.extensions ?? initialCharacter?.extensions ?? {}
-    };
+    const next = buildCurrentCard();
 
     upsertCharacter(next);
     router.push("/dashboard");
     router.refresh();
+  };
+
+  const onExportCardPng = async () => {
+    if (!form.name.trim() || !form.description.trim() || !form.greeting.trim()) {
+      setError("请先填写角色名称、Description 和开场白后再导出。");
+      return;
+    }
+
+    try {
+      const card = buildCurrentCard();
+      const blob = await exportSillyTavernPng(card);
+      const href = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      const safeName = (card.name || "character").replace(/[\\/:*?"<>|]/g, "_");
+      anchor.href = href;
+      anchor.download = `${safeName}.png`;
+      anchor.click();
+      URL.revokeObjectURL(href);
+      setError("");
+      setImportStatus("已导出 SillyTavern PNG 角色卡");
+    } catch {
+      setError("导出 PNG 失败，请重试。");
+    }
   };
 
   return (
@@ -240,6 +267,9 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
         <div className="flex gap-2">
           <button onClick={onSave} disabled={saving} className="w-full">
             {saving ? "保存中..." : "保存角色"}
+          </button>
+          <button type="button" onClick={onExportCardPng} className="w-full">
+            导出 PNG 角色卡
           </button>
           <button type="button" onClick={() => router.push("/dashboard")} className="w-full">
             返回列表
