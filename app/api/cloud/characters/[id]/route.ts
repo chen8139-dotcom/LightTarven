@@ -72,9 +72,16 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
   }
   const { id } = await context.params;
   const payload = (await request.json()) as CanonicalCharacterCard;
-  if (!payload.name?.trim() || !payload.persona?.trim()) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  if (!payload.name?.trim()) {
+    return NextResponse.json({ error: "Missing required fields: name" }, { status: 400 });
   }
+  const resolvedPersona =
+    payload.persona?.trim() ||
+    payload.personality?.trim() ||
+    payload.description?.trim() ||
+    payload.greeting?.trim() ||
+    payload.first_mes?.trim() ||
+    "未设置";
 
   let coverImageUrl: string | null = null;
   let coverImagePath: string | null = null;
@@ -96,7 +103,7 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
       name: payload.name.trim(),
       description: payload.description?.trim() || null,
       greeting: payload.greeting?.trim() || payload.first_mes?.trim() || null,
-      persona: payload.persona.trim(),
+      persona: resolvedPersona,
       scenario: payload.scenario?.trim() || null,
       style: payload.style?.trim() || null,
       rules: payload.rules?.trim() || null,
