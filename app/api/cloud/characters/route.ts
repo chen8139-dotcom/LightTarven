@@ -113,9 +113,6 @@ export async function POST(request: NextRequest) {
   const resolvedPersona =
     payload.persona?.trim() ||
     payload.personality?.trim() ||
-    payload.description?.trim() ||
-    payload.greeting?.trim() ||
-    payload.first_mes?.trim() ||
     "未设置";
 
   let coverImageUrl: string | null = null;

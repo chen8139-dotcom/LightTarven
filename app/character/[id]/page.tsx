@@ -43,12 +43,32 @@ export default function CharacterPage() {
         setActiveChat(chat);
 
         const messages = await getChatMessages(chat.id);
+        const greeting = currentCharacter.greeting?.trim() || currentCharacter.first_mes?.trim() || "";
         if (messages.length > 0) {
+          const hasUserMessage = messages.some((item) => item.role === "user");
+          const onlyAssistantMessages = messages.every((item) => item.role === "assistant");
+          if (greeting && !hasUserMessage && onlyAssistantMessages) {
+            const onlyMessage = messages[0];
+            if (messages.length === 1 && onlyMessage && onlyMessage.content.trim() !== greeting) {
+              const greetingMessage: ChatMessage = {
+                role: "assistant",
+                content: greeting,
+                timestamp: Date.now()
+              };
+              setHistory([greetingMessage]);
+              await fetch(`/api/cloud/chats/${chat.id}/messages`, { method: "DELETE" });
+              await fetch(`/api/cloud/chats/${chat.id}/messages`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role: "assistant", content: greeting })
+              });
+              return;
+            }
+          }
           setHistory(messages);
           return;
         }
 
-        const greeting = currentCharacter.greeting?.trim() || currentCharacter.first_mes?.trim() || "";
         if (!greeting) {
           setHistory([]);
           return;
