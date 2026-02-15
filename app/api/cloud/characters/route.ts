@@ -17,6 +17,27 @@ type CharacterRow = {
   updated_at: string;
 };
 
+const DEFAULT_SEED_CHARACTERS = [
+  {
+    name: "维多利亚·凌",
+    persona: "冷静、成熟、表达克制，重视现实判断和边界感。",
+    greeting: "你来了。我们从你真正关心的问题开始。",
+    cover_image_url: "/testdata/victoria.png"
+  },
+  {
+    name: "唐娟",
+    persona: "温和耐心，擅长把复杂问题拆解成可执行步骤。",
+    greeting: "你好，我在。说说你现在最想先解决的事。",
+    cover_image_url: "/testdata/tangjuan.png"
+  },
+  {
+    name: "巴尔德里克大人",
+    persona: "理性严谨，偏策略视角，善于给出结构化建议。",
+    greeting: "欢迎。先说目标，我会给你最直接的路径。",
+    cover_image_url: "/testdata/baldrick.png"
+  }
+];
+
 function toCard(row: CharacterRow): CanonicalCharacterCard {
   return {
     id: row.id,
@@ -50,7 +71,25 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const cards = (data as CharacterRow[]).map(toCard);
+  let rows = data as CharacterRow[];
+  if (rows.length === 0) {
+    const { data: seeded } = await supabase
+      .from("characters")
+      .insert(
+        DEFAULT_SEED_CHARACTERS.map((item) => ({
+          user_id: profile.id,
+          name: item.name,
+          persona: item.persona,
+          greeting: item.greeting,
+          cover_image_url: item.cover_image_url,
+          metadata: { origin: "system-seed", version: "v1" }
+        }))
+      )
+      .select("id,name,description,greeting,persona,scenario,style,rules,cover_image_url,metadata,updated_at");
+    rows = (seeded as CharacterRow[] | null) ?? [];
+  }
+
+  const cards = rows.map(toCard);
   return NextResponse.json({ characters: cards });
 }
 
