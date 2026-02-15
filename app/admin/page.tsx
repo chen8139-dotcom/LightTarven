@@ -39,11 +39,8 @@ export default async function AdminPage() {
     <main className="space-y-4">
       <section className="rounded border border-zinc-800 p-4">
         <h2 className="mb-3 text-lg font-semibold">管理后台</h2>
-        <p className="mb-3 text-sm text-zinc-400">支持创建用户、禁用/启用用户，以及查看数据详情。</p>
-        <UserAdminControls
-          users={(users as UserRow[] | null) ?? []}
-          currentAdminId={profile.id}
-        />
+        <p className="mb-3 text-sm text-zinc-400">支持创建用户，以及查看用户数据详情。</p>
+        <UserAdminControls />
       </section>
 
       <section className="rounded border border-zinc-800 p-4">
