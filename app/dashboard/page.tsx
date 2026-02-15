@@ -45,18 +45,19 @@ export default function DashboardPage() {
               className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 text-sm"
             >
               <div
-                className="relative h-52 bg-zinc-800 bg-cover bg-center"
-                style={
-                  character.coverImageDataUrl
-                    ? { backgroundImage: `url(${character.coverImageDataUrl})` }
-                    : undefined
-                }
+                className="relative h-52 bg-zinc-950"
               >
-                {!character.coverImageDataUrl ? (
+                {character.coverImageDataUrl ? (
+                  <img
+                    src={character.coverImageDataUrl}
+                    alt={`${character.name} cover`}
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
                   <div className="flex h-full items-center justify-center text-xs text-zinc-400">
                     未上传封面
                   </div>
-                ) : null}
+                )}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
               </div>
               <div className="space-y-3 p-3">
