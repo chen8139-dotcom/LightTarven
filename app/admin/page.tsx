@@ -16,9 +16,15 @@ export default async function AdminPage() {
   const { profile } = await getAuthenticatedProfile();
   if (!isProfileActive(profile)) {
     redirect("/");
+    return null;
+  }
+  if (!profile) {
+    redirect("/");
+    return null;
   }
   if (profile.role !== "admin") {
     redirect("/dashboard");
+    return null;
   }
 
   const adminClient = getSupabaseAdminClient();

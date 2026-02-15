@@ -32,9 +32,15 @@ export default async function AdminUserDetailPage({ params }: RouteParams) {
   const { profile } = await getAuthenticatedProfile();
   if (!isProfileActive(profile)) {
     redirect("/");
+    return null;
+  }
+  if (!profile) {
+    redirect("/");
+    return null;
   }
   if (profile.role !== "admin") {
     redirect("/dashboard");
+    return null;
   }
 
   const { id: userId } = await params;
