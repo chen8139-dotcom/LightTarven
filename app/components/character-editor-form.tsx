@@ -2,9 +2,9 @@
 
 import { ChangeEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createCharacter, updateCharacter } from "@/lib/cloud-client";
 import { processCoverImage } from "@/lib/image";
 import { exportSillyTavernPng, importSillyTavernPng } from "@/lib/sillytavern";
-import { upsertCharacter } from "@/lib/storage";
 import { CanonicalCharacterCard } from "@/lib/types";
 
 type Props = {
@@ -136,7 +136,7 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     }
   };
 
-  const onSave = () => {
+  const onSave = async () => {
     if (saving) return;
     if (!form.name.trim() || !form.description.trim() || !form.greeting.trim()) {
       setError("请填写角色名称、Description 和开场白。");
@@ -147,10 +147,19 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     setError("");
 
     const next = buildCurrentCard();
-
-    upsertCharacter(next);
-    router.push("/dashboard");
-    router.refresh();
+    try {
+      if (isEditing && initialCharacter?.id) {
+        await updateCharacter(initialCharacter.id, next);
+      } else {
+        await createCharacter(next);
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "保存失败，请重试。");
+      setSaving(false);
+      return;
+    }
   };
 
   const onExportCardPng = async () => {

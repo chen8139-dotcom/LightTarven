@@ -1,32 +1,53 @@
-# LightTavern MVP
+# Granwin AI Playground
 
-MVP based on Next.js App Router + TypeScript + Tailwind + OpenRouter.
+Light chat playground built with Next.js + Supabase + OpenRouter.
 
-## Setup
+## Core stack
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Configure environment:
-   ```bash
-   cp .env.example .env.local
-   ```
-3. Update `BETA_PASSCODE` and `OPENROUTER_API_KEY` in `.env.local`.
-4. Run dev server:
-   ```bash
-   npm run dev
-   ```
+- Next.js App Router + TypeScript + Tailwind CSS
+- Supabase Auth (email + password)
+- Supabase Postgres (characters / conversations / messages / settings)
+- Supabase Storage (character cover images)
+- OpenRouter (server-side proxy, key stored in environment only)
+
+## Environment variables
+
+Create `.env.local` from `.env.example` and fill:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_CHARACTER_COVERS_BUCKET` (optional, defaults to `character-covers`)
+- `OPENROUTER_API_KEY`
+
+## Supabase setup
+
+1. In Supabase SQL Editor, execute `supabase/schema.sql`.
+2. In Storage, create a public bucket named `character-covers` (or your custom bucket).
+3. In Auth Users, manually create user accounts (no self-signup in app).
+4. In `public.profiles`, set one admin account with `role='admin'`.
+5. To disable a user: set `disabled_at` to current timestamp.
+6. To soft-delete a user: set `deleted_at` to current timestamp.
+
+## Run
+
+```bash
+npm install
+npm run dev
+```
 
 ## Routes
 
-- `/` passcode gate
-- `/dashboard` character CRUD
-- `/character/[id]` single-character chat + prompt preview in dev
-- `/settings` OpenRouter model setup
+- `/` login
+- `/dashboard` character list
+- `/dashboard/new` create character
+- `/dashboard/[id]/edit` edit character
+- `/character/[id]` chat with selected character
+- `/settings` model selection
+- `/admin` read-only admin panel (admin only)
 
 ## Notes
 
-- OpenRouter API key is stored on server environment (`OPENROUTER_API_KEY`) and not exposed to browser.
-- Model calls are proxied through server routes.
-- Prompt assembly lives in `/lib/promptStack.ts`.
+- OpenRouter key never appears in frontend.
+- Token usage (`↑/↓/Σ`) is shown on assistant bubbles per turn.
+- Data is isolated by authenticated user via RLS.

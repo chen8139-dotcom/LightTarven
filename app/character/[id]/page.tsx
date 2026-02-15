@@ -3,16 +3,7 @@
 import { useParams } from "next/navigation";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { buildPromptStack } from "@/lib/promptStack";
-import {
-  clearHistory,
-  getCharacters,
-  getCurrentChatId,
-  getHistory,
-  getPasscode,
-  getSettings,
-  saveHistory,
-  setCurrentChatId
-} from "@/lib/storage";
+import { CloudChat, createChat, getCharacter, getChatMessages, getCloudSettings, listChats } from "@/lib/cloud-client";
 import { CanonicalCharacterCard, ChatMessage } from "@/lib/types";
 
 const TOKEN_USAGE_MARKER = "\n[[LT_TOKEN_USAGE]]";
@@ -21,6 +12,7 @@ export default function CharacterPage() {
   const params = useParams<{ id: string }>();
   const characterId = params.id;
   const [character, setCharacter] = useState<CanonicalCharacterCard | null>(null);
+  const [activeChat, setActiveChat] = useState<CloudChat | null>(null);
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,42 +25,52 @@ export default function CharacterPage() {
   const formRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
-    const current = getCharacters().find((item) => item.id === characterId) ?? null;
-    const savedHistory = getHistory(characterId);
-    const greeting = current?.greeting?.trim() || current?.first_mes?.trim() || "";
-    const shouldUseGreeting = Boolean(greeting) && savedHistory.length === 0;
-    const initialHistory = shouldUseGreeting
-      ? [
-          {
-            role: "assistant" as const,
-            content: greeting,
-            timestamp: Date.now()
-          }
-        ]
-      : savedHistory;
+    const load = async () => {
+      try {
+        const [currentCharacter, settings] = await Promise.all([
+          getCharacter(characterId),
+          getCloudSettings()
+        ]);
+        setCharacter(currentCharacter);
+        setCurrentModel(settings.model);
 
-    setCharacter(current);
-    setHistory(initialHistory);
-    if (shouldUseGreeting) {
-      saveHistory(characterId, initialHistory);
-    }
-    setCurrentModel(getSettings().model || "openai/gpt-4o-mini");
-    if (characterId && getCurrentChatId() !== characterId) {
-      setCurrentChatId(characterId);
-    }
+        let chats = await listChats(characterId);
+        let chat = chats[0] ?? null;
+        if (!chat) {
+          chat = await createChat(characterId, "默认会话");
+          chats = [chat];
+        }
+        setActiveChat(chat);
+
+        const messages = await getChatMessages(chat.id);
+        if (messages.length > 0) {
+          setHistory(messages);
+          return;
+        }
+
+        const greeting = currentCharacter.greeting?.trim() || currentCharacter.first_mes?.trim() || "";
+        if (!greeting) {
+          setHistory([]);
+          return;
+        }
+
+        const greetingMessage: ChatMessage = {
+          role: "assistant",
+          content: greeting,
+          timestamp: Date.now()
+        };
+        setHistory([greetingMessage]);
+        await fetch(`/api/cloud/chats/${chat.id}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: "assistant", content: greeting })
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "加载失败");
+      }
+    };
+    load();
   }, [characterId]);
-
-  useEffect(() => {
-    const refreshModel = () => {
-      setCurrentModel(getSettings().model || "openai/gpt-4o-mini");
-    };
-    window.addEventListener("focus", refreshModel);
-    window.addEventListener("storage", refreshModel);
-    return () => {
-      window.removeEventListener("focus", refreshModel);
-      window.removeEventListener("storage", refreshModel);
-    };
-  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -94,31 +96,32 @@ export default function CharacterPage() {
     });
   }, [character, history, input, debugConfig]);
 
-  const onClear = () => {
-    const greeting = character?.greeting?.trim() || character?.first_mes?.trim();
+  const onClear = async () => {
+    if (!activeChat || !character) return;
+    await fetch(`/api/cloud/chats/${activeChat.id}/messages`, { method: "DELETE" });
+    const greeting = character.greeting?.trim() || character.first_mes?.trim();
     if (!greeting) {
-      clearHistory(characterId);
       setHistory([]);
       return;
     }
-
-    const initialHistory: ChatMessage[] = [
-      {
-        role: "assistant",
-        content: greeting,
-        timestamp: Date.now()
-      }
-    ];
-    saveHistory(characterId, initialHistory);
-    setHistory(initialHistory);
+    const greetingMessage: ChatMessage = {
+      role: "assistant",
+      content: greeting,
+      timestamp: Date.now()
+    };
+    setHistory([greetingMessage]);
+    await fetch(`/api/cloud/chats/${activeChat.id}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "assistant", content: greeting })
+    });
   };
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!character || !input.trim() || loading) return;
+    if (!character || !activeChat || !input.trim() || loading) return;
     setLoading(true);
     setError("");
-    const settings = getSettings();
 
     const userMessage: ChatMessage = {
       role: "user",
@@ -133,20 +136,19 @@ export default function CharacterPage() {
       const result = await fetch("/api/chat", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-light-passcode": getPasscode()
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          character,
-          history,
+          characterId,
+          chatId: activeChat.id,
           userInput: userMessage.content,
           config: debugConfig,
-          model: settings.model
+          model: currentModel
         })
       });
 
       if (!result.ok || !result.body) {
-        setError("调用失败，请检查 Key、模型或网络。");
+        setError("调用失败，请检查模型或网络。");
         setLoading(false);
         return;
       }
@@ -180,18 +182,8 @@ export default function CharacterPage() {
         };
         setHistory([...nextHistory, assistantMessage]);
       }
-
-      const finalAssistantMessage: ChatMessage = {
-        role: "assistant",
-        content: assistantText,
-        timestamp: Date.now(),
-        tokenUsage
-      };
-      const finalHistory: ChatMessage[] = [...nextHistory, finalAssistantMessage];
-      saveHistory(characterId, finalHistory);
-      setHistory(finalHistory);
     } catch {
-      setError("调用失败，请检查 Key、模型或网络。");
+      setError("调用失败，请检查模型或网络。");
     } finally {
       setLoading(false);
     }
@@ -205,7 +197,7 @@ export default function CharacterPage() {
   };
 
   if (!character) {
-    return <main className="text-sm text-red-400">角色不存在，请回 Dashboard 重新选择。</main>;
+    return <main className="text-sm text-red-400">角色不存在或加载失败，请回 Dashboard 重新选择。</main>;
   }
 
   return (
@@ -269,9 +261,7 @@ export default function CharacterPage() {
                   </div>
                 );
               })}
-              {!history.length ? (
-                <p className="text-sm text-zinc-200/80">开始对话吧</p>
-              ) : null}
+              {!history.length ? <p className="text-sm text-zinc-200/80">开始对话吧</p> : null}
               <div ref={messagesEndRef} />
             </div>
           </div>

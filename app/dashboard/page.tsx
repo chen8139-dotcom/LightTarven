@@ -2,29 +2,34 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { listCharacters, removeCharacterCloud } from "@/lib/cloud-client";
 import { CanonicalCharacterCard } from "@/lib/types";
-import { getCharacters, removeCharacter, resetLocalCharacterData } from "@/lib/storage";
 
 export default function DashboardPage() {
   const [characters, setCharacters] = useState<CanonicalCharacterCard[]>([]);
+  const [error, setError] = useState("");
 
-  const refresh = () => setCharacters(getCharacters());
+  const refresh = async () => {
+    try {
+      const data = await listCharacters();
+      setCharacters(data);
+      setError("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "加载角色失败");
+    }
+  };
+
   useEffect(() => {
     refresh();
   }, []);
 
-  const onDelete = (id: string) => {
-    removeCharacter(id);
-    refresh();
-  };
-
-  const onResetLocalData = () => {
-    const confirmed = window.confirm(
-      "确认重置本地数据？\n这将删除当前浏览器本地存储中的角色与聊天记录信息。"
-    );
-    if (!confirmed) return;
-    resetLocalCharacterData();
-    refresh();
+  const onDelete = async (id: string) => {
+    try {
+      await removeCharacterCloud(id);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "删除失败");
+    }
   };
 
   return (
@@ -35,8 +40,8 @@ export default function DashboardPage() {
           <Link href="/dashboard/new">
             <button>添加角色</button>
           </Link>
-          <button onClick={onResetLocalData}>重置本地数据</button>
         </div>
+        {error ? <p className="mb-2 text-sm text-red-400">{error}</p> : null}
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {characters.map((character) => (
             <li

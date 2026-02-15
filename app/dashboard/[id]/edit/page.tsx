@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import CharacterEditorForm from "@/app/components/character-editor-form";
-import { getCharacters } from "@/lib/storage";
+import { getCharacter } from "@/lib/cloud-client";
 import { CanonicalCharacterCard } from "@/lib/types";
 
 export default function EditCharacterPage() {
@@ -12,9 +12,17 @@ export default function EditCharacterPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const found = getCharacters().find((item) => item.id === params.id) ?? null;
-    setCharacter(found);
-    setLoaded(true);
+    const run = async () => {
+      try {
+        const found = await getCharacter(params.id);
+        setCharacter(found);
+      } catch {
+        setCharacter(null);
+      } finally {
+        setLoaded(true);
+      }
+    };
+    run();
   }, [params.id]);
 
   if (!loaded) {

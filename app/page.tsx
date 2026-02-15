@@ -1,10 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { saveAccess } from "@/lib/storage";
 
 export default function HomePage() {
-  const [passcode, setPasscode] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -13,16 +13,18 @@ export default function HomePage() {
     setError("");
     setLoading(true);
     try {
-      const result = await fetch("/api/access/verify", {
+      const result = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passcode: passcode.trim() })
+        body: JSON.stringify({ email: email.trim(), password })
       });
       if (!result.ok) {
-        setError("口令错误，请重试。");
+        const payload = (await result.json().catch(() => ({ error: "登录失败，请重试。" }))) as {
+          error?: string;
+        };
+        setError(payload.error ?? "登录失败，请重试。");
         return;
       }
-      saveAccess(passcode.trim());
       window.location.assign("/dashboard");
     } catch {
       setError("网络异常，请稍后重试。");
@@ -33,16 +35,25 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto max-w-md rounded border border-zinc-800 p-6">
-      <h2 className="mb-4 text-xl font-semibold">内测口令验证</h2>
+      <h2 className="mb-4 text-xl font-semibold">账号登录</h2>
       <form className="space-y-3" onSubmit={onSubmit}>
         <input
-          value={passcode}
-          onChange={(event) => setPasscode(event.target.value)}
-          placeholder="输入内测口令"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="输入邮箱"
+          autoComplete="username"
+          className="w-full"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="输入密码"
+          autoComplete="current-password"
           className="w-full"
         />
         <button disabled={loading} type="submit" className="w-full">
-          {loading ? "校验中..." : "进入系统"}
+          {loading ? "登录中..." : "进入系统"}
         </button>
       </form>
       {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}

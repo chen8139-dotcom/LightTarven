@@ -1,30 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-const protectedPages = ["/dashboard", "/settings", "/character"];
-const apiRoutes = ["/api/chat", "/api/test-key", "/api/models"];
+const protectedPages = ["/dashboard", "/settings", "/character", "/admin"];
+const protectedApiRoutes = ["/api/chat", "/api/models", "/api/test-key", "/api/cloud", "/api/auth/logout"];
 
-export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   const isProtectedPage = protectedPages.some((path) => pathname.startsWith(path));
-  const isProtectedApi = apiRoutes.some((path) => pathname.startsWith(path));
+  const isProtectedApi = protectedApiRoutes.some((path) => pathname.startsWith(path));
 
-  if (isProtectedPage) {
-    const cookie = req.cookies.get("lt_access")?.value;
-    if (cookie !== "1") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+  const { response, user, supabase } = await updateSession(request);
+
+  if (!isProtectedPage && !isProtectedApi) {
+    return response;
   }
 
-  if (isProtectedApi) {
-    const passcode = req.headers.get("x-light-passcode");
-    if (!passcode || passcode !== process.env.BETA_PASSCODE) {
+  if (!user) {
+    if (isProtectedApi) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id,role,disabled_at,deleted_at")
+    .eq("id", user.id)
+    .single<{
+      id: string;
+      role: "admin" | "user";
+      disabled_at: string | null;
+      deleted_at: string | null;
+    }>();
+
+  if (!profile || profile.disabled_at || profile.deleted_at) {
+    if (isProtectedApi) {
+      return NextResponse.json({ error: "Account inactive" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (pathname.startsWith("/admin") && profile.role !== "admin") {
+    if (isProtectedApi) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/settings", "/character/:path*", "/api/chat", "/api/test-key", "/api/models"]
+  matcher: ["/dashboard/:path*", "/settings", "/character/:path*", "/admin/:path*", "/api/:path*"]
 };

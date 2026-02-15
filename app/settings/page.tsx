@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { getPasscode, getSettings, setSettings } from "@/lib/storage";
+import { getCloudSettings, updateCloudSettings } from "@/lib/cloud-client";
 
 type ModelsResponse = {
   models?: string[];
@@ -21,8 +21,7 @@ export default function SettingsPage() {
       const result = await fetch("/api/models", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-light-passcode": getPasscode()
+          "Content-Type": "application/json"
         }
       });
 
@@ -44,15 +43,27 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    const current = getSettings();
-    setModel(current.model);
-    fetchModels();
+    const run = async () => {
+      try {
+        const current = await getCloudSettings();
+        setModel(current.model);
+      } catch {
+        setStatus("读取设置失败");
+      } finally {
+        fetchModels();
+      }
+    };
+    run();
   }, [fetchModels]);
 
-  const save = (event: FormEvent) => {
+  const save = async (event: FormEvent) => {
     event.preventDefault();
-    setSettings({ model });
-    setStatus("已保存");
+    try {
+      await updateCloudSettings(model);
+      setStatus("已保存");
+    } catch {
+      setStatus("保存失败");
+    }
   };
 
   const testConnection = async () => {
@@ -62,8 +73,7 @@ export default function SettingsPage() {
       const result = await fetch("/api/test-key", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-light-passcode": getPasscode()
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           model

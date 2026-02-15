@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { getCurrentChatId, getHistory } from "@/lib/storage";
+import { useEffect, useState } from "react";
 
-const baseClass =
-  "rounded border px-3 py-2 text-zinc-100 transition";
+const baseClass = "rounded border px-3 py-2 text-zinc-100 transition";
 
 function navClass(active: boolean): string {
   if (active) {
@@ -15,48 +13,61 @@ function navClass(active: boolean): string {
   return `${baseClass} border-zinc-700 bg-zinc-900 hover:border-zinc-500 hover:bg-zinc-800`;
 }
 
+type SessionResponse = {
+  authenticated: boolean;
+  profile?: {
+    role: "admin" | "user";
+  };
+};
+
 export default function TopNav() {
   const pathname = usePathname();
-  const [currentChatId, setCurrentChat] = useState("");
-  const [hasAccess, setHasAccess] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [role, setRole] = useState<"admin" | "user">("user");
 
   useEffect(() => {
-    const cookieAccess = document.cookie
-      .split(";")
-      .map((item) => item.trim())
-      .includes("lt_access=1");
-    setHasAccess(cookieAccess);
-    setCurrentChat(getCurrentChatId());
+    const loadSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!response.ok) {
+          setAuthenticated(false);
+          return;
+        }
+        const payload = (await response.json()) as SessionResponse;
+        setAuthenticated(payload.authenticated);
+        setRole(payload.profile?.role ?? "user");
+      } catch {
+        setAuthenticated(false);
+      }
+    };
+    loadSession();
   }, [pathname]);
 
-  const hasCurrentChat = useMemo(() => {
-    if (!currentChatId) return false;
-    return getHistory(currentChatId).length > 0;
-  }, [currentChatId]);
+  const onLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.assign("/");
+  };
 
-  if (!hasAccess) {
+  if (!authenticated) {
     return null;
   }
 
-  const inCurrentChat = currentChatId ? pathname === `/character/${currentChatId}` : false;
-
   return (
     <nav className="ml-auto flex gap-2 text-sm">
-      {hasCurrentChat ? (
-        <Link
-          href={`/character/${currentChatId}`}
-          aria-disabled={inCurrentChat}
-          className={`${navClass(inCurrentChat)} ${inCurrentChat ? "pointer-events-none opacity-80" : ""}`}
-        >
-          继续聊天
-        </Link>
-      ) : null}
       <Link href="/dashboard" className={navClass(pathname.startsWith("/dashboard"))}>
         角色列表
       </Link>
       <Link href="/settings" className={navClass(pathname.startsWith("/settings"))}>
         模型设置
       </Link>
+      {role === "admin" ? (
+        <Link href="/admin" className={navClass(pathname.startsWith("/admin"))}>
+          管理后台
+        </Link>
+      ) : null}
+      <button className={navClass(false)} onClick={onLogout} type="button">
+        退出登录
+      </button>
     </nav>
   );
 }
