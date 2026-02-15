@@ -7,6 +7,8 @@ import { buildPromptStack } from "@/lib/promptStack";
 import { CanonicalCharacterCard, ChatMessage, PromptStackConfig } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
+const TOKEN_USAGE_MARKER = "\n[[LT_TOKEN_USAGE]]";
+
 type ChatPayload = {
   character?: CanonicalCharacterCard;
   history?: ChatMessage[];
@@ -38,6 +40,9 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       model: body.model,
       stream: true,
+      stream_options: {
+        include_usage: true
+      },
       messages: stack.messages,
       temperature: 0.7
     })
@@ -54,6 +59,13 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let buffer = "";
+      let tokenUsage:
+        | {
+            prompt_tokens?: number;
+            completion_tokens?: number;
+            total_tokens?: number;
+          }
+        | undefined;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -69,15 +81,34 @@ export async function POST(req: NextRequest) {
           try {
             const parsed = JSON.parse(data) as {
               choices?: { delta?: { content?: string } }[];
+              usage?: {
+                prompt_tokens?: number;
+                completion_tokens?: number;
+                total_tokens?: number;
+              };
             };
             const chunk = parsed.choices?.[0]?.delta?.content;
             if (chunk) {
               controller.enqueue(encoder.encode(chunk));
             }
+            if (parsed.usage) {
+              tokenUsage = parsed.usage;
+            }
           } catch {
             continue;
           }
         }
+      }
+      if (tokenUsage) {
+        controller.enqueue(
+          encoder.encode(
+            `${TOKEN_USAGE_MARKER}${JSON.stringify({
+              promptTokens: tokenUsage.prompt_tokens ?? 0,
+              completionTokens: tokenUsage.completion_tokens ?? 0,
+              totalTokens: tokenUsage.total_tokens ?? 0
+            })}`
+          )
+        );
       }
       controller.close();
     }

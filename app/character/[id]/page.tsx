@@ -15,6 +15,8 @@ import {
 } from "@/lib/storage";
 import { CanonicalCharacterCard, ChatMessage } from "@/lib/types";
 
+const TOKEN_USAGE_MARKER = "\n[[LT_TOKEN_USAGE]]";
+
 export default function CharacterPage() {
   const params = useParams<{ id: string }>();
   const characterId = params.id;
@@ -139,15 +141,30 @@ export default function CharacterPage() {
 
       const reader = result.body.getReader();
       const decoder = new TextDecoder();
+      let streamText = "";
       let assistantText = "";
+      let tokenUsage: ChatMessage["tokenUsage"] | undefined;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        assistantText += decoder.decode(value, { stream: true });
+        streamText += decoder.decode(value, { stream: true });
+        const markerIndex = streamText.indexOf(TOKEN_USAGE_MARKER);
+        if (markerIndex >= 0) {
+          assistantText = streamText.slice(0, markerIndex);
+          const usageRaw = streamText.slice(markerIndex + TOKEN_USAGE_MARKER.length);
+          try {
+            tokenUsage = JSON.parse(usageRaw) as ChatMessage["tokenUsage"];
+          } catch {
+            tokenUsage = undefined;
+          }
+        } else {
+          assistantText = streamText;
+        }
         const assistantMessage: ChatMessage = {
           role: "assistant",
           content: assistantText,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          tokenUsage
         };
         setHistory([...nextHistory, assistantMessage]);
       }
@@ -155,7 +172,8 @@ export default function CharacterPage() {
       const finalAssistantMessage: ChatMessage = {
         role: "assistant",
         content: assistantText,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        tokenUsage
       };
       const finalHistory: ChatMessage[] = [...nextHistory, finalAssistantMessage];
       saveHistory(characterId, finalHistory);
@@ -221,6 +239,12 @@ export default function CharacterPage() {
                           : "border-sky-200/35 bg-blue-500/30 text-white"
                       ].join(" ")}
                     >
+                      {!isUser && message.tokenUsage ? (
+                        <p className="mb-1 text-right text-[10px] text-white/80">
+                          ↑ {message.tokenUsage.promptTokens} ↓ {message.tokenUsage.completionTokens} Σ{" "}
+                          {message.tokenUsage.totalTokens}
+                        </p>
+                      ) : null}
                       {message.content}
                     </div>
                   </div>

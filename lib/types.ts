@@ -37,6 +37,11 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+  tokenUsage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 };
 
 export type PromptStackConfig = {
