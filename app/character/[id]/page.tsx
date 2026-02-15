@@ -27,18 +27,17 @@ export default function CharacterPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [currentCharacter, settings] = await Promise.all([
+        const [currentCharacter, settings, chats] = await Promise.all([
           getCharacter(characterId),
-          getCloudSettings()
+          getCloudSettings(),
+          listChats(characterId)
         ]);
         setCharacter(currentCharacter);
         setCurrentModel(settings.model);
 
-        let chats = await listChats(characterId);
         let chat = chats[0] ?? null;
         if (!chat) {
           chat = await createChat(characterId, "默认会话");
-          chats = [chat];
         }
         setActiveChat(chat);
 

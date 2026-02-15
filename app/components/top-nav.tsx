@@ -50,7 +50,7 @@ export default function TopNav() {
       }
     };
     loadSession();
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
     setDrawerOpen(false);
