@@ -1,7 +1,22 @@
 export type CanonicalCharacterCard = {
   id: string;
   name: string;
+  // SillyTavern-compatible core fields.
   description?: string;
+  personality?: string;
+  first_mes?: string;
+  mes_example?: string;
+  creator_notes?: string;
+  system_prompt?: string;
+  post_history_instructions?: string;
+  alternate_greetings?: string[];
+  tags?: string[];
+  creator?: string;
+  character_version?: string;
+  extensions?: Record<string, unknown>;
+
+  // Internal aliases kept for backward compatibility in this app.
+  greeting?: string;
   persona: string;
   coverImageDataUrl?: string;
   scenario?: string;

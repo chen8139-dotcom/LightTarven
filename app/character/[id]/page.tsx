@@ -30,8 +30,24 @@ export default function CharacterPage() {
 
   useEffect(() => {
     const current = getCharacters().find((item) => item.id === characterId) ?? null;
+    const savedHistory = getHistory(characterId);
+    const greeting = current?.greeting?.trim() || current?.first_mes?.trim() || "";
+    const shouldUseGreeting = Boolean(greeting) && savedHistory.length === 0;
+    const initialHistory = shouldUseGreeting
+      ? [
+          {
+            role: "assistant" as const,
+            content: greeting,
+            timestamp: Date.now()
+          }
+        ]
+      : savedHistory;
+
     setCharacter(current);
-    setHistory(getHistory(characterId));
+    setHistory(initialHistory);
+    if (shouldUseGreeting) {
+      saveHistory(characterId, initialHistory);
+    }
     setCurrentModel(getSettings().model || "openai/gpt-4o-mini");
     if (characterId && getCurrentChatId() !== characterId) {
       setCurrentChatId(characterId);
@@ -65,8 +81,22 @@ export default function CharacterPage() {
   }, [character, history, input, debugConfig]);
 
   const onClear = () => {
-    clearHistory(characterId);
-    setHistory([]);
+    const greeting = character?.greeting?.trim() || character?.first_mes?.trim();
+    if (!greeting) {
+      clearHistory(characterId);
+      setHistory([]);
+      return;
+    }
+
+    const initialHistory: ChatMessage[] = [
+      {
+        role: "assistant",
+        content: greeting,
+        timestamp: Date.now()
+      }
+    ];
+    saveHistory(characterId, initialHistory);
+    setHistory(initialHistory);
   };
 
   const onSubmit = async (event: FormEvent) => {

@@ -12,9 +12,10 @@ type Props = {
 
 type CharacterForm = {
   name: string;
+  description: string;
+  greeting: string;
   persona: string;
   coverImageDataUrl: string;
-  description: string;
   scenario: string;
   style: string;
   rules: string;
@@ -22,9 +23,10 @@ type CharacterForm = {
 
 const emptyForm: CharacterForm = {
   name: "",
+  description: "",
+  greeting: "",
   persona: "",
   coverImageDataUrl: "",
-  description: "",
   scenario: "",
   style: "",
   rules: ""
@@ -39,9 +41,10 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     initialCharacter
       ? {
           name: initialCharacter.name,
-          persona: initialCharacter.persona,
-          coverImageDataUrl: initialCharacter.coverImageDataUrl ?? "",
           description: initialCharacter.description ?? "",
+          greeting: initialCharacter.greeting ?? initialCharacter.first_mes ?? "",
+          persona: initialCharacter.personality ?? initialCharacter.persona ?? "",
+          coverImageDataUrl: initialCharacter.coverImageDataUrl ?? "",
           scenario: initialCharacter.scenario ?? "",
           style: initialCharacter.style ?? "",
           rules: initialCharacter.rules ?? ""
@@ -66,8 +69,8 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
 
   const onSave = () => {
     if (saving) return;
-    if (!form.name.trim() || !form.persona.trim()) {
-      setError("请填写角色名称和 Persona。");
+    if (!form.name.trim() || !form.description.trim() || !form.greeting.trim() || !form.persona.trim()) {
+      setError("请填写角色名称、Description、开场白和 Personality。");
       return;
     }
 
@@ -77,14 +80,26 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
     const next: CanonicalCharacterCard = {
       id: initialCharacter?.id ?? crypto.randomUUID(),
       name: form.name.trim(),
+      description: form.description.trim(),
+      greeting: form.greeting.trim(),
+      first_mes: form.greeting.trim(),
       persona: form.persona.trim(),
+      personality: form.persona.trim(),
       coverImageDataUrl: form.coverImageDataUrl.trim() || undefined,
-      description: form.description.trim() || undefined,
       scenario: form.scenario.trim() || undefined,
       style: form.style.trim() || undefined,
       rules: form.rules.trim() || undefined,
       examples: initialCharacter?.examples ?? [],
-      metadata: { ...(initialCharacter?.metadata ?? {}), version: "v1" }
+      metadata: { ...(initialCharacter?.metadata ?? {}), version: "v1" },
+      mes_example: initialCharacter?.mes_example,
+      creator_notes: initialCharacter?.creator_notes,
+      system_prompt: initialCharacter?.system_prompt,
+      post_history_instructions: initialCharacter?.post_history_instructions,
+      alternate_greetings: initialCharacter?.alternate_greetings ?? [],
+      tags: initialCharacter?.tags ?? initialCharacter?.metadata?.tags ?? [],
+      creator: initialCharacter?.creator,
+      character_version: initialCharacter?.character_version,
+      extensions: initialCharacter?.extensions ?? {}
     };
 
     upsertCharacter(next);
@@ -103,9 +118,23 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
           className="w-full"
         />
         <textarea
+          value={form.description}
+          onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
+          placeholder="角色设定 Description（必填）"
+          rows={4}
+          className="w-full"
+        />
+        <textarea
+          value={form.greeting}
+          onChange={(event) => setForm((prev) => ({ ...prev, greeting: event.target.value }))}
+          placeholder="开场白 Greetings（必填）"
+          rows={3}
+          className="w-full"
+        />
+        <textarea
           value={form.persona}
           onChange={(event) => setForm((prev) => ({ ...prev, persona: event.target.value }))}
-          placeholder="Persona（必填）"
+          placeholder="Personality（必填）"
           rows={5}
           className="w-full"
         />
@@ -129,13 +158,6 @@ export default function CharacterEditorForm({ initialCharacter = null }: Props) 
             </button>
           ) : null}
         </div>
-        <textarea
-          value={form.description}
-          onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
-          placeholder="Description"
-          rows={2}
-          className="w-full"
-        />
         <textarea
           value={form.scenario}
           onChange={(event) => setForm((prev) => ({ ...prev, scenario: event.target.value }))}
