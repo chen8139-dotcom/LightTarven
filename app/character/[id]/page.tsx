@@ -197,7 +197,7 @@ export default function CharacterPage() {
                 );
               })}
               {!history.length ? (
-                <p className="text-sm text-zinc-200/80">开始对话吧，消息会显示为玻璃气泡样式。</p>
+                <p className="text-sm text-zinc-200/80">开始对话吧</p>
               ) : null}
               <div ref={messagesEndRef} />
             </div>
