@@ -67,7 +67,15 @@ function toMessage(row: MessageRow): ChatMessage {
 }
 
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
+  let authMs = 0;
+  let characterMs = 0;
+  let chatMs = 0;
+  let messagesMs = 0;
+
+  const authStartedAt = Date.now();
   const { profile, supabase } = await getAuthenticatedProfile();
+  authMs = Date.now() - authStartedAt;
   if (!isProfileActive(profile)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -80,6 +88,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing characterId" }, { status: 400 });
   }
 
+  const characterStartedAt = Date.now();
   const { data: character } = await supabase
     .from("characters")
     .select("id,name,description,greeting,persona,scenario,style,rules,cover_image_url,metadata")
@@ -87,10 +96,12 @@ export async function GET(request: NextRequest) {
     .eq("user_id", profile.id)
     .is("deleted_at", null)
     .single<CharacterRow>();
+  characterMs = Date.now() - characterStartedAt;
   if (!character) {
     return NextResponse.json({ error: "Character not found" }, { status: 404 });
   }
 
+  const chatStartedAt = Date.now();
   const { data: chatRows } = await supabase
     .from("conversations")
     .select("id,character_id,title,created_at,updated_at")
@@ -115,12 +126,15 @@ export async function GET(request: NextRequest) {
     }
     chat = createdChat as ChatRow;
   }
+  chatMs = Date.now() - chatStartedAt;
 
+  const messagesStartedAt = Date.now();
   const { data: messageRows, error: messagesError } = await supabase
     .from("messages")
     .select("id,role,content,created_at,prompt_tokens,completion_tokens,total_tokens")
     .eq("conversation_id", chat.id)
     .order("created_at", { ascending: true });
+  messagesMs = Date.now() - messagesStartedAt;
   if (messagesError) {
     return NextResponse.json({ error: messagesError.message }, { status: 500 });
   }
@@ -159,6 +173,11 @@ export async function GET(request: NextRequest) {
       }
     }
   }
+
+  const totalMs = Date.now() - startedAt;
+  console.info(
+    `[perf][chat-init] characterId=${characterId} authMs=${authMs} characterMs=${characterMs} chatMs=${chatMs} messagesMs=${messagesMs} totalMs=${totalMs}`
+  );
 
   return NextResponse.json({
     character: toCard(character),
