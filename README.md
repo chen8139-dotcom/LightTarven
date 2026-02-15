@@ -51,3 +51,10 @@ npm run dev
 - OpenRouter key never appears in frontend.
 - Token usage (`↑/↓/Σ`) is shown on assistant bubbles per turn.
 - Data is isolated by authenticated user via RLS.
+
+## Documentation
+
+- Architecture: `docs/architecture.md`
+- Data Flow: `docs/data-flow.md`
+- API Docs: `docs/api-docs.md`
+- Docs Index: `docs/README.md`
