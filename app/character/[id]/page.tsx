@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { buildPromptStack } from "@/lib/promptStack";
 import {
   clearHistory,
@@ -29,6 +29,8 @@ export default function CharacterPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentModel, setCurrentModel] = useState("openai/gpt-4o-mini");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     const current = getCharacters().find((item) => item.id === characterId) ?? null;
@@ -71,6 +73,16 @@ export default function CharacterPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [history]);
+
+  useEffect(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    const maxHeight = 160;
+    textarea.style.height = "0px";
+    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${Math.max(44, nextHeight)}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [input]);
 
   const promptPreview = useMemo(() => {
     if (!character) return null;
@@ -185,6 +197,13 @@ export default function CharacterPage() {
     }
   };
 
+  const onInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Enter" || event.shiftKey) return;
+    if (event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    formRef.current?.requestSubmit();
+  };
+
   if (!character) {
     return <main className="text-sm text-red-400">角色不存在，请回 Dashboard 重新选择。</main>;
   }
@@ -258,22 +277,29 @@ export default function CharacterPage() {
           </div>
 
           <form
+            ref={formRef}
             onSubmit={onSubmit}
-            className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-md md:p-4"
+            className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-md"
           >
-            <textarea
-              rows={3}
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="输入你的消息"
-              className="w-full border-white/20 bg-black/30 text-white placeholder:text-zinc-300"
-            />
-            <div className="mt-2 flex items-center justify-between">
-              {error ? <p className="text-sm text-red-300">{error}</p> : <span />}
-              <button disabled={loading} type="submit" className="border-white/20 bg-white text-black">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={onInputKeyDown}
+                placeholder="输入你的消息"
+                className="min-h-[44px] flex-1 resize-none overflow-hidden border-white/20 bg-black/30 text-white placeholder:text-zinc-300"
+              />
+              <button
+                disabled={loading}
+                type="submit"
+                className="h-11 shrink-0 border-white/20 bg-white px-4 text-black"
+              >
                 {loading ? "生成中..." : "发送"}
               </button>
             </div>
+            {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
           </form>
         </div>
 
