@@ -8,6 +8,33 @@ const KEYS = {
   currentChatId: "lt_current_chat_id"
 };
 
+const DEFAULT_CHARACTERS: CanonicalCharacterCard[] = [
+  {
+    id: "default-victoria",
+    name: "维多利亚·凌",
+    persona: "冷静、成熟、表达克制，重视现实判断和边界感。",
+    greeting: "你来了。我们从你真正关心的问题开始。",
+    coverImageDataUrl: "/testdata/victoria.png",
+    metadata: { origin: "system-seed", version: "v1" }
+  },
+  {
+    id: "default-tangjuan",
+    name: "唐娟",
+    persona: "温和耐心，擅长把复杂问题拆解成可执行步骤。",
+    greeting: "你好，我在。说说你现在最想先解决的事。",
+    coverImageDataUrl: "/testdata/tangjuan.png",
+    metadata: { origin: "system-seed", version: "v1" }
+  },
+  {
+    id: "default-baldrick",
+    name: "巴尔德里克大人",
+    persona: "理性严谨，偏策略视角，善于给出结构化建议。",
+    greeting: "欢迎。先说目标，我会给你最直接的路径。",
+    coverImageDataUrl: "/testdata/baldrick.png",
+    metadata: { origin: "system-seed", version: "v1" }
+  }
+];
+
 export function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
@@ -67,7 +94,11 @@ export function setSettings(value: UserSettings): void {
 }
 
 export function getCharacters(): CanonicalCharacterCard[] {
-  return readJSON<CanonicalCharacterCard[]>(KEYS.characters, []);
+  const list = readJSON<CanonicalCharacterCard[]>(KEYS.characters, []);
+  if (list.length > 0) return list;
+  if (!isBrowser()) return [];
+  writeJSON(KEYS.characters, DEFAULT_CHARACTERS);
+  return DEFAULT_CHARACTERS;
 }
 
 export function upsertCharacter(character: CanonicalCharacterCard): void {
