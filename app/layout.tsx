@@ -1,5 +1,6 @@
 import "@/app/globals.css";
 import { ReactNode } from "react";
+import BetaConsentGate from "@/app/components/beta-consent-gate";
 import TopNav from "@/app/components/top-nav";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </h1>
             <TopNav />
           </header>
+          <BetaConsentGate />
           {children}
         </div>
       </body>
