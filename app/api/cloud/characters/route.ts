@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedProfile, isProfileActive } from "@/lib/auth";
 import { CanonicalCharacterCard } from "@/lib/types";
 import { uploadCharacterCoverFromDataUrl } from "@/lib/supabase/storage";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type CharacterRow = {
   id: string;
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
   let coverImagePath: string | null = null;
   if (payload.coverImageDataUrl?.startsWith("data:image/")) {
     const uploaded = await uploadCharacterCoverFromDataUrl(
-      supabase,
+      getSupabaseAdminClient(),
       profile.id,
       payload.coverImageDataUrl
     );
