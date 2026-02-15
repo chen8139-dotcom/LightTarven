@@ -75,9 +75,9 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-  AdminUI[/admin] --> AdminAPI1[POST /api/admin/users]
-  AdminUI --> AdminAPI2[PATCH /api/admin/users/:id/status]
-  AdminAPI1 --> Guard[校验 admin 身份]
+  AdminUI["/admin"] --> AdminAPI1["POST /api/admin/users"]
+  AdminUI --> AdminAPI2["PATCH /api/admin/users/:id/status"]
+  AdminAPI1 --> Guard["校验 admin 身份"]
   AdminAPI2 --> Guard
   Guard --> SAuth[(Supabase Auth Admin API)]
   Guard --> SDB[(profiles)]
