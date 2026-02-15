@@ -8,6 +8,13 @@ export type CloudChat = {
   updatedAt: string;
 };
 
+export type ChatInitPayload = {
+  character: CanonicalCharacterCard;
+  model: string;
+  chat: CloudChat;
+  messages: ChatMessage[];
+};
+
 export async function cloudFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init);
   const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
@@ -84,6 +91,12 @@ export async function getCloudSettings(): Promise<{ model: string }> {
     cache: "no-store"
   });
   return payload.settings;
+}
+
+export async function getChatInit(characterId: string): Promise<ChatInitPayload> {
+  return cloudFetch<ChatInitPayload>(`/api/cloud/chat-init?characterId=${encodeURIComponent(characterId)}`, {
+    cache: "no-store"
+  });
 }
 
 export async function updateCloudSettings(model: string): Promise<{ model: string }> {
