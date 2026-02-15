@@ -25,6 +25,9 @@ export async function GET(_request: NextRequest, context: RouteParams) {
   if (!isProfileActive(profile)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { id: chatId } = await context.params;
 
   const { data: chat } = await supabase
@@ -70,6 +73,9 @@ export async function DELETE(_request: NextRequest, context: RouteParams) {
   if (!isProfileActive(profile)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { id: chatId } = await context.params;
 
   const { data: chat } = await supabase
@@ -93,6 +99,9 @@ export async function DELETE(_request: NextRequest, context: RouteParams) {
 export async function POST(request: NextRequest, context: RouteParams) {
   const { profile, supabase } = await getAuthenticatedProfile();
   if (!isProfileActive(profile)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { id: chatId } = await context.params;

@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
   if (!isProfileActive(profile)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const payload = (await request.json()) as ChatPayload;
   if (!payload.characterId || !payload.chatId || !payload.userInput || !payload.model || !payload.config) {

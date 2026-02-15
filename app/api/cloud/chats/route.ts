@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
   if (!isProfileActive(profile)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const characterId = request.nextUrl.searchParams.get("characterId");
   let query = supabase
@@ -50,6 +53,9 @@ type CreateChatPayload = {
 export async function POST(request: NextRequest) {
   const { profile, supabase } = await getAuthenticatedProfile();
   if (!isProfileActive(profile)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const payload = (await request.json()) as CreateChatPayload;

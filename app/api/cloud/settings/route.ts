@@ -6,6 +6,9 @@ export async function GET() {
   if (!isProfileActive(profile)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   return NextResponse.json({
     settings: {
       model: profile.model_preference || "openai/gpt-4o-mini"
@@ -20,6 +23,9 @@ type SettingsPayload = {
 export async function PATCH(request: NextRequest) {
   const { profile, supabase } = await getAuthenticatedProfile();
   if (!isProfileActive(profile)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const payload = (await request.json()) as SettingsPayload;

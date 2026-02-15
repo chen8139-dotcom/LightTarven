@@ -60,6 +60,9 @@ export async function GET() {
   if (!isProfileActive(profile)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { data, error } = await supabase
     .from("characters")
@@ -96,6 +99,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const { profile, supabase } = await getAuthenticatedProfile();
   if (!isProfileActive(profile)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
