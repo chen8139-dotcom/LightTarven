@@ -5,12 +5,20 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const baseClass = "rounded border px-3 py-2 text-zinc-100 transition";
+const mobileItemBaseClass = "block w-full rounded border px-3 py-3 text-left text-zinc-100 transition";
 
 function navClass(active: boolean): string {
   if (active) {
     return `${baseClass} border-cyan-400/70 bg-cyan-500/20`;
   }
   return `${baseClass} border-zinc-700 bg-zinc-900 hover:border-zinc-500 hover:bg-zinc-800`;
+}
+
+function mobileItemClass(active: boolean): string {
+  if (active) {
+    return `${mobileItemBaseClass} border-cyan-400/70 bg-cyan-500/20`;
+  }
+  return `${mobileItemBaseClass} border-zinc-700 bg-zinc-900/80 hover:border-zinc-500 hover:bg-zinc-800`;
 }
 
 type SessionResponse = {
@@ -89,7 +97,7 @@ export default function TopNav() {
 
       <div className="ml-auto md:hidden">
         <button className={navClass(false)} onClick={() => setDrawerOpen(true)} type="button">
-          菜单
+          ☰
         </button>
       </div>
 
@@ -101,27 +109,31 @@ export default function TopNav() {
             type="button"
             aria-label="关闭菜单"
           />
-          <aside className="absolute right-0 top-0 h-full w-72 space-y-3 border-l border-zinc-700 bg-zinc-950 p-4 shadow-2xl">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-semibold text-zinc-200">导航菜单</p>
+          <aside className="absolute left-0 top-0 h-full w-[82vw] max-w-[340px] border-r border-zinc-700 bg-zinc-950 p-4 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-base font-semibold text-zinc-100">导航菜单</p>
               <button className={navClass(false)} onClick={() => setDrawerOpen(false)} type="button">
-                关闭
+                ✕
               </button>
             </div>
-            <Link href="/dashboard" className={navClass(pathname.startsWith("/dashboard"))}>
-              角色列表
-            </Link>
-            <Link href="/settings" className={navClass(pathname.startsWith("/settings"))}>
-              模型设置
-            </Link>
-            {role === "admin" ? (
-              <Link href="/admin" className={navClass(pathname.startsWith("/admin"))}>
-                管理后台
+            <div className="space-y-2">
+              <Link href="/dashboard" className={mobileItemClass(pathname.startsWith("/dashboard"))}>
+                角色列表
               </Link>
-            ) : null}
-            <button className={navClass(false)} onClick={onLogout} type="button">
-              退出登录
-            </button>
+              <Link href="/settings" className={mobileItemClass(pathname.startsWith("/settings"))}>
+                模型设置
+              </Link>
+              {role === "admin" ? (
+                <Link href="/admin" className={mobileItemClass(pathname.startsWith("/admin"))}>
+                  管理后台
+                </Link>
+              ) : null}
+            </div>
+            <div className="absolute bottom-4 left-4 right-4">
+              <button className={mobileItemClass(false)} onClick={onLogout} type="button">
+                退出登录
+              </button>
+            </div>
           </aside>
         </div>
       ) : null}
