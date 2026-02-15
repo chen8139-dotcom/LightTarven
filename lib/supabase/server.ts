@@ -9,7 +9,13 @@ export async function getSupabaseServerClient() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(
+        cookiesToSet: Array<{
+          name: string;
+          value: string;
+          options?: Parameters<typeof cookieStore.set>[2];
+        }>
+      ) {
         for (const cookie of cookiesToSet) {
           cookieStore.set(cookie.name, cookie.value, cookie.options);
         }
