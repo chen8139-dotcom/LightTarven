@@ -26,11 +26,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 
   const adminClient = getSupabaseAdminClient();
-  const disabledAt = payload.action === "disable" ? new Date().toISOString() : null;
-  const { error } = await adminClient
-    .from("profiles")
-    .update({ disabled_at: disabledAt })
-    .eq("id", id);
+  const { error } =
+    payload.action === "disable"
+      ? await adminClient
+          .from("profiles")
+          .update({ disabled_at: new Date().toISOString() })
+          .eq("id", id)
+      : await adminClient
+          .from("profiles")
+          .update({ disabled_at: null })
+          .eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
