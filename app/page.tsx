@@ -34,29 +34,43 @@ export default function HomePage() {
   };
 
   return (
-    <main className="mx-auto max-w-md rounded border border-zinc-800 p-6">
-      <h2 className="mb-4 text-xl font-semibold">账号登录</h2>
-      <form className="space-y-3" onSubmit={onSubmit}>
-        <input
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="输入邮箱"
-          autoComplete="username"
-          className="w-full"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="输入密码"
-          autoComplete="current-password"
-          className="w-full"
-        />
-        <button disabled={loading} type="submit" className="w-full">
-          {loading ? "登录中..." : "进入系统"}
-        </button>
-      </form>
-      {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
+    <main className="mx-auto max-w-2xl space-y-4">
+      <section className="rounded border border-zinc-800 p-6">
+        <h2 className="mb-4 text-xl font-semibold">账号登录</h2>
+        <form className="space-y-3" onSubmit={onSubmit}>
+          <input
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="输入邮箱"
+            autoComplete="username"
+            className="w-full"
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="输入密码"
+            autoComplete="current-password"
+            className="w-full"
+          />
+          <button disabled={loading} type="submit" className="w-full">
+            {loading ? "登录中..." : "进入系统"}
+          </button>
+        </form>
+        {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
+      </section>
+
+      <section className="rounded border border-zinc-800 p-5">
+        <h3 className="mb-3 text-base font-semibold">合规与内测声明</h3>
+        <div className="space-y-2 text-sm text-zinc-300">
+          <p>1. 本系统仅用于内测评估，功能和内容可能随时调整。</p>
+          <p>2. 请勿公开传播内测页面、截图、角色卡和生成内容。</p>
+          <p>3. 模型输出可能存在错误或不当内容，不构成专业建议。</p>
+          <p>4. 禁止用于违法违规、侵权、骚扰、欺诈或绕过安全限制的行为。</p>
+          <p>5. 请勿输入个人敏感信息或企业机密信息。</p>
+          <p>6. 声明更新后你可能需要重新确认，方可继续使用。</p>
+        </div>
+      </section>
     </main>
   );
 }
