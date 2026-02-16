@@ -114,7 +114,16 @@ export async function POST(request: NextRequest) {
 
   const upstream = await createUpstream(provider, model, stack.messages);
   if (!upstream.ok || !upstream.body) {
-    return NextResponse.json({ error: "Upstream failed" }, { status: 502 });
+    const detail = await upstream.text().catch(() => "");
+    return NextResponse.json(
+      {
+        error: "Upstream failed",
+        provider,
+        status: upstream.status,
+        detail
+      },
+      { status: 502 }
+    );
   }
 
   const reader = upstream.body.getReader();
@@ -238,7 +247,7 @@ async function createUpstream(provider: LlmProvider, model: string, messages: Pr
         temperature: 0.7,
         input: messages.map((item) => ({
           role: item.role,
-          content: [{ type: "text", text: item.content }]
+          content: [{ type: "input_text", text: item.content }]
         }))
       })
     });
