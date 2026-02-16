@@ -156,13 +156,16 @@ Base URL: `/api`
 }
 ```
 - 响应类型：`text/plain`（stream）
+- Provider 约定：
+  - `openrouter`：调用 `chat/completions`
+  - `volcengine`：调用 `responses`，消息会转换为 `input[].content[{type:"input_text",text:"..."}]`
 - 约定：流末尾可能附带 token usage 标记
   - marker: `[[LT_TOKEN_USAGE]]`
   - 后接 JSON：`{"promptTokens":...,"completionTokens":...,"totalTokens":...}`
 - 失败状态：
   - `400` 参数不完整
   - `404` 会话或角色不存在
-  - `502` 上游模型调用失败
+  - `502` 上游模型调用失败（会返回 `provider/status/detail` 便于排障）
 
 ## 5. Settings & Model Discovery
 
@@ -179,11 +182,13 @@ Base URL: `/api`
 - 作用：按 provider 拉取模型列表（服务端使用环境变量 API Key）
 - 请求体：`{ "provider": "openrouter|volcengine" }`
 - 响应：`{ "models": ["model-a", "model-b"] }`
+- 说明：`volcengine` 在 `/models` 不可用时会回退到 `VOLCENGINE_MODELS`（若已配置）
 
 ### POST `/api/test-key`
 - 作用：测试模型连通性
 - 请求体：`{ "provider": "openrouter|volcengine", "model": "openai/gpt-4o-mini" }`
 - 成功响应：`{ "ok": true }`
+- 失败响应：`{ "error": "Connection failed", "provider": "...", "status": 4xx/5xx, "detail": "..." }`
 
 ## 6. Admin APIs
 

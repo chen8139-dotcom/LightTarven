@@ -57,12 +57,18 @@ LightTavern 是一个基于角色卡的聊天应用，支持：
 3. 返回聚合结果：`character + model + chat + messages`
 
 #### 生成阶段（发送消息）
-1. 前端提交 `characterId/chatId/userInput/model/config` 到 `POST /api/chat`
+1. 前端提交 `characterId/chatId/userInput/provider/model/config` 到 `POST /api/chat`
 2. 后端拉取角色信息与历史消息
 3. 使用 `buildPromptStack` 生成标准 `messages`
 4. 根据用户设置选择 OpenRouter 或火山引擎流式接口，边接收边回传文本
-5. 流结束后写入两条消息（user + assistant）和 token usage
-6. 更新会话 `updated_at`
+5. 火山引擎路径会将标准消息映射为 Responses `input_text` 格式
+6. 流结束后写入两条消息（user + assistant）和 token usage
+7. 更新会话 `updated_at`
+
+### 4.5 模型设置策略
+- OpenRouter：支持拉取模型列表后选择。
+- 火山引擎：当前默认固定模型（如 `doubao-seed-2-0-pro-260215`）并保留测试连接与保存。
+- `/api/models` 对火山模式支持 `VOLCENGINE_MODELS` 兜底，避免 `/models` 不可用导致设置页不可用。
 
 ### 4.3 数据持久化
 - 角色：`public.characters`
