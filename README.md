@@ -57,4 +57,5 @@ npm run dev
 - Architecture: `docs/architecture.md`
 - Data Flow: `docs/data-flow.md`
 - API Docs: `docs/api-docs.md`
+- User Guide: `docs/user-guide.md`
 - Docs Index: `docs/README.md`
