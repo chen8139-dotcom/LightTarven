@@ -11,6 +11,8 @@ type ModelsResponse = {
   detail?: string;
 };
 
+const VOLCENGINE_STATIC_MODEL = "doubao-seed-2-0-pro-260215";
+
 export default function SettingsPage() {
   const [provider, setProvider] = useState<LlmProvider>(DEFAULT_PROVIDER);
   const [model, setModel] = useState(DEFAULT_MODEL);
@@ -66,11 +68,20 @@ export default function SettingsPage() {
         const current = await getCloudSettings();
         nextProvider = current.provider;
         setProvider(current.provider);
-        setModel(current.model);
+        setModel(
+          current.provider === "volcengine"
+            ? VOLCENGINE_STATIC_MODEL
+            : current.model
+        );
       } catch {
         setStatus("读取设置失败");
       } finally {
-        fetchModels(nextProvider);
+        if (nextProvider === "openrouter") {
+          fetchModels(nextProvider);
+        } else {
+          setModels([VOLCENGINE_STATIC_MODEL]);
+          setStatus("火山引擎使用固定模型");
+        }
       }
     };
     run();
@@ -122,6 +133,12 @@ export default function SettingsPage() {
             onChange={(event) => {
               const nextProvider = event.target.value as LlmProvider;
               setProvider(nextProvider);
+              if (nextProvider === "volcengine") {
+                setModels([VOLCENGINE_STATIC_MODEL]);
+                setModel(VOLCENGINE_STATIC_MODEL);
+                setStatus("已切换到火山引擎（固定模型）");
+                return;
+              }
               setModels([]);
               setStatus(`已切换到${getProviderLabel(nextProvider)}`);
               fetchModels(nextProvider);
@@ -138,22 +155,28 @@ export default function SettingsPage() {
             value={model}
             onChange={(event) => setModel(event.target.value)}
             className="w-full"
-            disabled={loadingModels}
+            disabled={loadingModels || provider === "volcengine"}
           >
-            {!models.length ? <option value={model}>暂无模型，请先点击拉取模型</option> : null}
+            {!models.length ? (
+              <option value={model}>
+                {provider === "volcengine" ? "固定模型" : "暂无模型，请先点击拉取模型"}
+              </option>
+            ) : null}
             {models.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            disabled={loadingModels}
-            onClick={() => fetchModels(provider)}
-          >
-            {loadingModels ? "拉取中..." : "拉取模型"}
-          </button>
+          {provider === "openrouter" ? (
+            <button
+              type="button"
+              disabled={loadingModels}
+              onClick={() => fetchModels(provider)}
+            >
+              {loadingModels ? "拉取中..." : "拉取模型"}
+            </button>
+          ) : null}
         </div>
         <div className="flex gap-2">
           <button type="submit">保存</button>
