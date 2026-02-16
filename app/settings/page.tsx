@@ -6,6 +6,9 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderLabel, LlmProvider } from "
 
 type ModelsResponse = {
   models?: string[];
+  warning?: string;
+  error?: string;
+  detail?: string;
 };
 
 export default function SettingsPage() {
@@ -31,7 +34,12 @@ export default function SettingsPage() {
       });
 
       if (!result.ok) {
-        setStatus("拉取模型失败");
+        const errorPayload = (await result.json().catch(() => ({}))) as ModelsResponse;
+        setStatus(
+          `拉取模型失败${
+            errorPayload.detail ? `：${String(errorPayload.detail).slice(0, 120)}` : ""
+          }`
+        );
         return;
       }
 
@@ -39,7 +47,11 @@ export default function SettingsPage() {
       const nextModels = payload.models ?? [];
       setModels(nextModels);
       setModel((prev) => (nextModels.length && !nextModels.includes(prev) ? nextModels[0] : prev));
-      setStatus(nextModels.length ? `已拉取 ${nextModels.length} 个模型` : "未获取到模型");
+      if (nextModels.length) {
+        setStatus(payload.warning ? `已拉取 ${nextModels.length} 个模型（兜底列表）` : `已拉取 ${nextModels.length} 个模型`);
+      } else {
+        setStatus("未获取到模型");
+      }
     } catch {
       setStatus("拉取模型失败");
     } finally {

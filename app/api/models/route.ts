@@ -24,6 +24,13 @@ type ModelsPayload = {
   provider?: "openrouter" | "volcengine";
 };
 
+function getVolcengineFallbackModels(): string[] {
+  return (process.env.VOLCENGINE_MODELS ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export async function POST(request: NextRequest) {
   const payload = (await request.json().catch(() => ({}))) as ModelsPayload;
   const provider = normalizeProvider(payload.provider);
@@ -47,9 +54,18 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const detail = await response.text();
+      if (provider === "volcengine") {
+        const fallback = getVolcengineFallbackModels();
+        if (fallback.length) {
+          return NextResponse.json({
+            models: fallback,
+            warning: "volcengine /models unavailable, used VOLCENGINE_MODELS fallback"
+          });
+        }
+      }
       return NextResponse.json(
         { error: `${provider} models fetch failed`, detail },
-        { status: 400 }
+        { status: response.status }
       );
     }
 

@@ -21,6 +21,7 @@ Create `.env.local` from `.env.example` and fill:
 - `OPENROUTER_API_KEY`
 - `VOLCENGINE_API_KEY`
 - `VOLCENGINE_BASE_URL` (optional, defaults to `https://ark.cn-beijing.volces.com/api/v3`)
+- `VOLCENGINE_MODELS` (optional, comma-separated fallback model list when `/models` is unavailable)
 
 ## Supabase setup
 
