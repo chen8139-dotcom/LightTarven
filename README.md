@@ -1,6 +1,6 @@
 # Granwin AI Playground
 
-Light chat playground built with Next.js + Supabase + OpenRouter.
+Light chat playground built with Next.js + Supabase + OpenRouter / Volcengine.
 
 ## Core stack
 
@@ -8,7 +8,7 @@ Light chat playground built with Next.js + Supabase + OpenRouter.
 - Supabase Auth (email + password)
 - Supabase Postgres (characters / conversations / messages / settings)
 - Supabase Storage (character cover images)
-- OpenRouter (server-side proxy, key stored in environment only)
+- OpenRouter / Volcengine (server-side proxy, keys stored in environment only)
 
 ## Environment variables
 
@@ -19,6 +19,8 @@ Create `.env.local` from `.env.example` and fill:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_CHARACTER_COVERS_BUCKET` (optional, defaults to `character-covers`)
 - `OPENROUTER_API_KEY`
+- `VOLCENGINE_API_KEY`
+- `VOLCENGINE_BASE_URL` (optional, defaults to `https://ark.cn-beijing.volces.com/api/v3`)
 
 ## Supabase setup
 
@@ -48,7 +50,7 @@ npm run dev
 
 ## Notes
 
-- OpenRouter key never appears in frontend.
+- Provider API keys never appear in frontend.
 - Token usage (`↑/↓/Σ`) is shown on assistant bubbles per turn.
 - Data is isolated by authenticated user via RLS.
 

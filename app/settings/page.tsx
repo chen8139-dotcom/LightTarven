@@ -2,19 +2,21 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { getCloudSettings, updateCloudSettings } from "@/lib/cloud-client";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderLabel, LlmProvider } from "@/lib/llm";
 
 type ModelsResponse = {
   models?: string[];
 };
 
 export default function SettingsPage() {
-  const [model, setModel] = useState("openai/gpt-4o-mini");
+  const [provider, setProvider] = useState<LlmProvider>(DEFAULT_PROVIDER);
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [models, setModels] = useState<string[]>([]);
   const [status, setStatus] = useState("未测试");
   const [loading, setLoading] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
 
-  const fetchModels = useCallback(async () => {
+  const fetchModels = useCallback(async (nextProvider: LlmProvider) => {
     setLoadingModels(true);
     setStatus("拉取模型中...");
     try {
@@ -22,7 +24,10 @@ export default function SettingsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
-        }
+        },
+        body: JSON.stringify({
+          provider: nextProvider
+        })
       });
 
       if (!result.ok) {
@@ -44,13 +49,16 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const run = async () => {
+      let nextProvider: LlmProvider = DEFAULT_PROVIDER;
       try {
         const current = await getCloudSettings();
+        nextProvider = current.provider;
+        setProvider(current.provider);
         setModel(current.model);
       } catch {
         setStatus("读取设置失败");
       } finally {
-        fetchModels();
+        fetchModels(nextProvider);
       }
     };
     run();
@@ -59,7 +67,7 @@ export default function SettingsPage() {
   const save = async (event: FormEvent) => {
     event.preventDefault();
     try {
-      await updateCloudSettings(model);
+      await updateCloudSettings(provider, model);
       setStatus("已保存");
     } catch {
       setStatus("保存失败");
@@ -76,6 +84,7 @@ export default function SettingsPage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          provider,
           model
         })
       });
@@ -97,6 +106,23 @@ export default function SettingsPage() {
       <form onSubmit={save} className="space-y-3">
         <div className="flex gap-2">
           <select
+            value={provider}
+            onChange={(event) => {
+              const nextProvider = event.target.value as LlmProvider;
+              setProvider(nextProvider);
+              setModels([]);
+              setStatus(`已切换到${getProviderLabel(nextProvider)}`);
+              fetchModels(nextProvider);
+            }}
+            disabled={loadingModels || loading}
+            className="w-full"
+          >
+            <option value="openrouter">海外模型</option>
+            <option value="volcengine">火山引擎</option>
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <select
             value={model}
             onChange={(event) => setModel(event.target.value)}
             className="w-full"
@@ -112,7 +138,7 @@ export default function SettingsPage() {
           <button
             type="button"
             disabled={loadingModels}
-            onClick={fetchModels}
+            onClick={() => fetchModels(provider)}
           >
             {loadingModels ? "拉取中..." : "拉取模型"}
           </button>

@@ -6,12 +6,29 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
   role text not null default 'user' check (role in ('admin', 'user')),
+  provider_preference text not null default 'openrouter' check (provider_preference in ('openrouter', 'volcengine')),
   model_preference text not null default 'openai/gpt-4o-mini',
   disabled_at timestamptz,
   deleted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+add column if not exists provider_preference text not null default 'openrouter';
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'profiles_provider_preference_check'
+  ) then
+    alter table public.profiles
+    add constraint profiles_provider_preference_check
+    check (provider_preference in ('openrouter', 'volcengine'));
+  end if;
+end $$;
 
 -- Character definitions.
 create table if not exists public.characters (

@@ -1,4 +1,5 @@
 import { CanonicalCharacterCard, ChatMessage } from "@/lib/types";
+import { LlmProvider } from "@/lib/llm";
 
 export type CloudChat = {
   id: string;
@@ -10,6 +11,7 @@ export type CloudChat = {
 
 export type ChatInitPayload = {
   character: CanonicalCharacterCard;
+  provider: LlmProvider;
   model: string;
   chat: CloudChat;
   messages: ChatMessage[];
@@ -86,10 +88,13 @@ export async function getChatMessages(chatId: string): Promise<ChatMessage[]> {
   return payload.messages;
 }
 
-export async function getCloudSettings(): Promise<{ model: string }> {
-  const payload = await cloudFetch<{ settings: { model: string } }>("/api/cloud/settings", {
+export async function getCloudSettings(): Promise<{ provider: LlmProvider; model: string }> {
+  const payload = await cloudFetch<{ settings: { provider: LlmProvider; model: string } }>(
+    "/api/cloud/settings",
+    {
     cache: "no-store"
-  });
+    }
+  );
   return payload.settings;
 }
 
@@ -99,11 +104,17 @@ export async function getChatInit(characterId: string): Promise<ChatInitPayload>
   });
 }
 
-export async function updateCloudSettings(model: string): Promise<{ model: string }> {
-  const payload = await cloudFetch<{ settings: { model: string } }>("/api/cloud/settings", {
+export async function updateCloudSettings(
+  provider: LlmProvider,
+  model: string
+): Promise<{ provider: LlmProvider; model: string }> {
+  const payload = await cloudFetch<{ settings: { provider: LlmProvider; model: string } }>(
+    "/api/cloud/settings",
+    {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model })
-  });
+    body: JSON.stringify({ provider, model })
+    }
+  );
   return payload.settings;
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedProfile, isProfileActive } from "@/lib/auth";
+import { DEFAULT_PROVIDER, normalizeProvider } from "@/lib/llm";
 
 export async function GET() {
   const { user, profile } = await getAuthenticatedProfile();
@@ -15,6 +16,7 @@ export async function GET() {
     },
     profile: {
       role: profile.role,
+      providerPreference: normalizeProvider(profile.provider_preference || DEFAULT_PROVIDER),
       modelPreference: profile.model_preference
     }
   });

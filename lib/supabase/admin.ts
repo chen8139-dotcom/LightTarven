@@ -12,6 +12,7 @@ type Database = {
           id: string;
           email: string | null;
           role: "admin" | "user";
+          provider_preference: "openrouter" | "volcengine";
           model_preference: string;
           disabled_at: string | null;
           deleted_at: string | null;
@@ -22,6 +23,7 @@ type Database = {
           id: string;
           email?: string | null;
           role?: "admin" | "user";
+          provider_preference?: "openrouter" | "volcengine";
           model_preference?: string;
           disabled_at?: string | null;
           deleted_at?: string | null;
@@ -31,6 +33,7 @@ type Database = {
         Update: {
           email?: string | null;
           role?: "admin" | "user";
+          provider_preference?: "openrouter" | "volcengine";
           model_preference?: string;
           disabled_at?: string | null;
           deleted_at?: string | null;

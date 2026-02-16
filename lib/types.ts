@@ -68,5 +68,6 @@ export type PromptStackOutput = {
 };
 
 export type UserSettings = {
+  provider: "openrouter" | "volcengine";
   model: string;
 };

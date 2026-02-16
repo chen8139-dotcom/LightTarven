@@ -5,6 +5,7 @@ import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "
 import { buildPromptStack } from "@/lib/promptStack";
 import { CloudChat, getChatInit } from "@/lib/cloud-client";
 import { CanonicalCharacterCard, ChatMessage } from "@/lib/types";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, getProviderLabel, LlmProvider } from "@/lib/llm";
 
 const TOKEN_USAGE_MARKER = "\n[[LT_TOKEN_USAGE]]";
 
@@ -19,7 +20,8 @@ export default function CharacterPage() {
   const [error, setError] = useState("");
   const [debugConfig, setDebugConfig] = useState({ maxHistory: 12, includeExamples: true });
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [currentModel, setCurrentModel] = useState("openai/gpt-4o-mini");
+  const [currentProvider, setCurrentProvider] = useState<LlmProvider>(DEFAULT_PROVIDER);
+  const [currentModel, setCurrentModel] = useState(DEFAULT_MODEL);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -29,6 +31,7 @@ export default function CharacterPage() {
       try {
         const init = await getChatInit(characterId);
         setCharacter(init.character);
+        setCurrentProvider(init.provider);
         setCurrentModel(init.model);
         setActiveChat(init.chat);
         setHistory(init.messages);
@@ -110,6 +113,7 @@ export default function CharacterPage() {
           chatId: activeChat.id,
           userInput: userMessage.content,
           config: debugConfig,
+          provider: currentProvider,
           model: currentModel
         })
       });
@@ -188,7 +192,9 @@ export default function CharacterPage() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold">{character.name}</h2>
-                <p className="mt-1 text-xs text-zinc-200/85">当前模型：{currentModel}</p>
+                <p className="mt-1 text-xs text-zinc-200/85">
+                  当前接入：{getProviderLabel(currentProvider)} / {currentModel}
+                </p>
               </div>
               <button
                 onClick={() => setSettingsOpen(true)}

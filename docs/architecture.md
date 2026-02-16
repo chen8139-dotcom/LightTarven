@@ -5,14 +5,14 @@ LightTavern 是一个基于角色卡的聊天应用，支持：
 - 账号登录与会话维持（Supabase Auth）
 - 角色管理、会话管理、消息持久化（Supabase Postgres）
 - 角色封面图片上传（Supabase Storage）
-- 通过服务端代理调用 OpenRouter 大模型
+- 通过服务端代理调用 OpenRouter / 火山引擎大模型
 - 基础管理员能力（创建用户、启用/禁用用户）
 
 ## 2. 技术栈
 - 前端与后端：Next.js App Router + React + TypeScript
 - UI：Tailwind CSS
 - 鉴权与数据库：Supabase (`auth.users` + `public.*`)
-- 模型网关：OpenRouter API
+- 模型网关：OpenRouter API + 火山引擎 Responses API
 
 ## 3. 分层设计
 
@@ -30,13 +30,15 @@ LightTavern 是一个基于角色卡的聊天应用，支持：
 - 关键职责：
   - 请求参数校验
   - 用户状态校验（是否登录、是否禁用/删除）
-  - 调用 Supabase / OpenRouter
+  - 调用 Supabase / LLM Provider(OpenRouter 或火山引擎)
   - 统一返回 JSON 或流式文本
 
 ### 3.3 领域与基础设施层（lib）
 - `lib/auth.ts`：获取当前用户与 profile，判断账号是否可用
 - `lib/supabase/*`：Server/Browser/Admin 客户端与 middleware 会话更新
 - `lib/openrouter.ts`：OpenRouter API 地址与请求头
+- `lib/volcengine.ts`：火山引擎 API 地址与请求头
+- `lib/llm.ts`：Provider 类型、默认值、文案映射
 - `lib/promptStack.ts`：系统提示词 + 历史消息拼装
 - `lib/storage.ts`：DataURL 图片上传到 Supabase Storage
 
@@ -57,8 +59,8 @@ LightTavern 是一个基于角色卡的聊天应用，支持：
 #### 生成阶段（发送消息）
 1. 前端提交 `characterId/chatId/userInput/model/config` 到 `POST /api/chat`
 2. 后端拉取角色信息与历史消息
-3. 使用 `buildPromptStack` 生成 OpenRouter `messages`
-4. 调 OpenRouter 流式接口，边接收边回传文本
+3. 使用 `buildPromptStack` 生成标准 `messages`
+4. 根据用户设置选择 OpenRouter 或火山引擎流式接口，边接收边回传文本
 5. 流结束后写入两条消息（user + assistant）和 token usage
 6. 更新会话 `updated_at`
 
@@ -79,7 +81,7 @@ LightTavern 是一个基于角色卡的聊天应用，支持：
 - 服务端仅在必要场景使用 Admin Client：
   - 用户管理
   - 角色封面上传
-- OpenRouter API Key 仅存在服务端环境变量
+- Provider API Key 仅存在服务端环境变量
 
 ## 6. 目录建议
 - `app/`: 页面与 API 路由

@@ -150,6 +150,7 @@ Base URL: `/api`
   "characterId": "uuid",
   "chatId": "uuid",
   "userInput": "你好",
+  "provider": "openrouter",
   "model": "openai/gpt-4o-mini",
   "config": { "maxHistory": 12, "includeExamples": true }
 }
@@ -166,21 +167,22 @@ Base URL: `/api`
 ## 5. Settings & Model Discovery
 
 ### GET `/api/cloud/settings`
-- 作用：读取当前用户模型偏好
-- 响应：`{ "settings": { "model": "openai/gpt-4o-mini" } }`
+- 作用：读取当前用户模型接入与模型偏好
+- 响应：`{ "settings": { "provider": "openrouter", "model": "openai/gpt-4o-mini" } }`
 
 ### PATCH `/api/cloud/settings`
-- 作用：更新模型偏好
-- 请求体：`{ "model": "xxx/yyy" }`
-- 响应：`{ "settings": { "model": "xxx/yyy" } }`
+- 作用：更新模型接入与模型偏好
+- 请求体：`{ "provider": "openrouter|volcengine", "model": "xxx/yyy" }`
+- 响应：`{ "settings": { "provider": "openrouter|volcengine", "model": "xxx/yyy" } }`
 
 ### POST `/api/models`
-- 作用：从 OpenRouter 拉取模型列表（服务端使用环境变量 API Key）
+- 作用：按 provider 拉取模型列表（服务端使用环境变量 API Key）
+- 请求体：`{ "provider": "openrouter|volcengine" }`
 - 响应：`{ "models": ["model-a", "model-b"] }`
 
 ### POST `/api/test-key`
 - 作用：测试模型连通性
-- 请求体：`{ "model": "openai/gpt-4o-mini" }`
+- 请求体：`{ "provider": "openrouter|volcengine", "model": "openai/gpt-4o-mini" }`
 - 成功响应：`{ "ok": true }`
 
 ## 6. Admin APIs

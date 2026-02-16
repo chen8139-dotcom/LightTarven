@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedProfile, isProfileActive } from "@/lib/auth";
 import { CanonicalCharacterCard, ChatMessage } from "@/lib/types";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, normalizeProvider } from "@/lib/llm";
 
 type CharacterRow = {
   id: string;
@@ -181,7 +182,8 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     character: toCard(character),
-    model: profile.model_preference || "openai/gpt-4o-mini",
+    provider: normalizeProvider(profile.provider_preference || DEFAULT_PROVIDER),
+    model: profile.model_preference || DEFAULT_MODEL,
     chat: {
       id: chat.id,
       characterId: chat.character_id,

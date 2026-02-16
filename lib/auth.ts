@@ -6,6 +6,7 @@ export type AppProfile = {
   role: "admin" | "user";
   disabled_at: string | null;
   deleted_at: string | null;
+  provider_preference: "openrouter" | "volcengine" | null;
   model_preference: string | null;
   created_at: string | null;
 };
@@ -19,7 +20,7 @@ export async function getAuthenticatedProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id,email,role,disabled_at,deleted_at,model_preference,created_at")
+    .select("id,email,role,disabled_at,deleted_at,provider_preference,model_preference,created_at")
     .eq("id", user.id)
     .single<AppProfile>();
 
