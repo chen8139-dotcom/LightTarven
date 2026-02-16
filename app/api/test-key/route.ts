@@ -50,7 +50,16 @@ export async function POST(req: NextRequest) {
         });
 
   if (!response.ok) {
-    return NextResponse.json({ error: "Connection failed" }, { status: 400 });
+    const detail = await response.text().catch(() => "");
+    return NextResponse.json(
+      {
+        error: "Connection failed",
+        provider,
+        status: response.status,
+        detail
+      },
+      { status: 400 }
+    );
   }
 
   return NextResponse.json({ ok: true });

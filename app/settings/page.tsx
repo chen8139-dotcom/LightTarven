@@ -11,6 +11,13 @@ type ModelsResponse = {
   detail?: string;
 };
 
+type TestKeyResponse = {
+  ok?: boolean;
+  error?: string;
+  detail?: string;
+  status?: number;
+};
+
 const VOLCENGINE_STATIC_MODEL = "doubao-seed-2-0-pro-260215";
 
 export default function SettingsPage() {
@@ -112,7 +119,12 @@ export default function SettingsPage() {
         })
       });
       if (!result.ok) {
-        setStatus("连接失败");
+        const payload = (await result.json().catch(() => ({}))) as TestKeyResponse;
+        setStatus(
+          `连接失败${
+            payload.status ? `(${payload.status})` : ""
+          }${payload.detail ? `：${String(payload.detail).slice(0, 140)}` : ""}`
+        );
         return;
       }
       setStatus("连接成功");
